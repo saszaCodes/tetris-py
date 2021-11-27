@@ -32,6 +32,7 @@ for i in range(0, no_of_columns):
         column.append(False)
     game_state.append(column)
 
+
 # TYLKO DO DEBUGOWANIA
 def print_game_state_pretty():
     for j in range(no_of_rows):
@@ -46,10 +47,22 @@ def print_game_state_pretty():
         if j == no_of_rows - 1:
             print(separator)
 
+
 class Position:
     def __init__(self, x, y):
         self.x = x
         self.y = y
+
+
+class Cell_Sprite(pg.sprite.Sprite):
+    def __init__(self):
+        pg.sprite.Sprite.__init__(self)
+        game_window = pg.Surface(screen.get_size())
+        self.cell_width = game_window.get_width() / no_of_columns
+        self.cell_height = game_window.get_height() / no_of_rows
+        self.image = pg.Surface((self.cell_width, self.cell_height))
+        self.image.fill((0, 0, 0))
+        self.rect = self.image.get_rect()
 
 
 class Block(pg.sprite.Sprite):
@@ -80,7 +93,12 @@ class Block(pg.sprite.Sprite):
 
     def _stop(self):
         self.remove(moving_blocks)
-        self.add(stationary_blocks)
+        # draw a single cell sprite for each cell occupied by the block and add it to stationary_sprites group
+        for cell_position in self.fields:
+            cell_sprite = Cell_Sprite()
+            cell_sprite.rect.topleft = (cell_position.x * self.cell_width, cell_position.y * self.cell_height)
+            cell_sprite.add(stationary_blocks)
+        # add individual cell sprites to the stationary_blocks group
         new_block()
 
     # ZDECYDOWAC CZY move CZY RACZEJ _move
@@ -316,6 +334,8 @@ while running:
             if event.key == pg.K_r:
                 rotation = 90
             moving_blocks.update(direction, rotation)
+        elif event.type == pg.KEYDOWN and event.key == pg.K_s:
+            print(stationary_blocks)
         elif event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
             running = False
     if frame_counter >= 15:
