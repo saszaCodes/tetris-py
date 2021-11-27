@@ -55,20 +55,21 @@ class Position:
 
 
 class Cell_Sprite(pg.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, color):
         pg.sprite.Sprite.__init__(self)
         game_window = pg.Surface(screen.get_size())
         self.cell_width = game_window.get_width() / no_of_columns
         self.cell_height = game_window.get_height() / no_of_rows
         self.image = pg.Surface((self.cell_width, self.cell_height))
-        self.image.fill((0, 0, 0))
+        self.image.fill(color)
         self.rect = self.image.get_rect()
 
 
 class Block(pg.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, color):
         pg.sprite.Sprite.__init__(self)
         self.add(moving_blocks)
+        self.color = color
         self.position = Position(0, 6)
         self.fields = []
         self.rotation = 0
@@ -84,7 +85,7 @@ class Block(pg.sprite.Sprite):
         self.rect.topleft = (self.position.y * self.cell_width, self.position.x * self.cell_height)
         for field in self.fields:
             field_surface = pg.Surface((self.cell_width, self.cell_height))
-            field_surface.fill((0, 0, 0))
+            field_surface.fill(self.color)
             dest = (
                 (field.y - self.position.y) * self.cell_width,
                 (field.x - self.position.x) * self.cell_height
@@ -95,7 +96,7 @@ class Block(pg.sprite.Sprite):
         self.remove(moving_blocks)
         # draw a single cell sprite for each cell occupied by the block and add it to stationary_sprites group
         for cell_position in self.fields:
-            cell_sprite = Cell_Sprite()
+            cell_sprite = Cell_Sprite(self.color)
             cell_sprite.rect.topleft = (cell_position.y * self.cell_width, cell_position.x * self.cell_height)
             cell_sprite.add(stationary_blocks)
         check_and_clear()
@@ -162,8 +163,8 @@ class Block(pg.sprite.Sprite):
 
 
 class Square_Block(Block):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, color):
+        super().__init__(color)
         self.fields = self.calculate_fields(self.position.x, self.position.y, self.rotation)
 
     def calculate_fields(self, x, y, rotation):
@@ -177,8 +178,8 @@ class Square_Block(Block):
 
 
 class L_Block(Block):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, color):
+        super().__init__(color)
         self.fields = self.calculate_fields(self.position.x, self.position.y, self.rotation)
 
     def calculate_fields(self, x, y, rotation):
@@ -214,8 +215,8 @@ class L_Block(Block):
 
 
 class Line_Block(Block):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, color):
+        super().__init__(color)
         self.fields = self.calculate_fields(self.position.x, self.position.y, self.rotation)
 
     def calculate_fields(self, x, y, rotation):
@@ -235,8 +236,8 @@ class Line_Block(Block):
 
 
 class Diagonal_Block(Block):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, color):
+        super().__init__(color)
         self.fields = self.calculate_fields(self.position.x, self.position.y, self.rotation)
 
     def calculate_fields(self, x, y, rotation):
@@ -259,15 +260,23 @@ class Diagonal_Block(Block):
 
 def new_block():
     random.seed()
+    colors = [
+        (229, 57, 53),
+        (30, 136, 229),
+        (142, 36, 170),
+        (0, 137, 123),
+    ]
+    color = colors[random.randrange(0, colors.__len__())]
+    random.seed()
     rand_int = random.randrange(0, 4)
     if rand_int == 0:
-        block = Square_Block()
+        block = Square_Block(color)
     elif rand_int == 1:
-        block = L_Block()
+        block = L_Block(color)
     elif rand_int == 2:
-        block = Line_Block()
+        block = Line_Block(color)
     elif rand_int == 3:
-        block = Diagonal_Block()
+        block = Diagonal_Block(color)
     no_room_for_new_block = False
     for field in block.fields:
         if game_state[field.x][field.y]:
