@@ -261,13 +261,19 @@ def new_block():
     random.seed()
     rand_int = random.randrange(0, 4)
     if rand_int == 0:
-        Square_Block()
+        block = Square_Block()
     elif rand_int == 1:
-        L_Block()
+        block = L_Block()
     elif rand_int == 2:
-        Line_Block()
+        block = Line_Block()
     elif rand_int == 3:
-        Diagonal_Block()
+        block = Diagonal_Block()
+    no_room_for_new_block = False
+    for field in block.fields:
+        if game_state[field.x][field.y]:
+            no_room_for_new_block = True
+    if no_room_for_new_block:
+        pg.display.quit()
     moving_blocks.update('d', 0)
     moving_blocks.draw(screen)
     stationary_blocks.draw(screen)
