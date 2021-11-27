@@ -26,25 +26,25 @@ no_of_columns = 16
 
 # zamienić tablicę kolumn na tablicę wierszy i pozostałe rzeczy dostosować
 game_state = []
-for i in range(0, no_of_columns):
-    column = []
-    for j in range(0, no_of_rows):
-        column.append(False)
-    game_state.append(column)
+for i in range(0, no_of_rows):
+    row = []
+    for j in range(0, no_of_columns):
+        row.append(False)
+    game_state.append(row)
 
 
 # TYLKO DO DEBUGOWANIA
 def print_game_state_pretty():
-    for j in range(no_of_rows):
+    for (index, row) in enumerate(game_state):
         row_s = ""
         separator = "_____________________________________________________________"
-        for column in game_state:
-            if column[j]:
+        for column in row:
+            if column:
                 row_s += 'X\t'
             else:
                 row_s += '.\t'
         print(row_s)
-        if j == no_of_rows - 1:
+        if index == no_of_rows - 1:
             print(separator)
 
 
@@ -69,7 +69,7 @@ class Block(pg.sprite.Sprite):
     def __init__(self):
         pg.sprite.Sprite.__init__(self)
         self.add(moving_blocks)
-        self.position = Position(6, 0)
+        self.position = Position(0, 6)
         self.fields = []
         self.rotation = 0
         game_window = pg.Surface(screen.get_size())
@@ -81,13 +81,13 @@ class Block(pg.sprite.Sprite):
         self.image.fill((255, 255, 255))
         self.image.set_colorkey((255, 255, 255))
         self.rect = self.image.get_rect()
-        self.rect.topleft = (self.position.x * self.cell_width, self.position.y * self.cell_height)
+        self.rect.topleft = (self.position.y * self.cell_width, self.position.x * self.cell_height)
         for field in self.fields:
             field_surface = pg.Surface((self.cell_width, self.cell_height))
             field_surface.fill((0, 0, 0))
             dest = (
-                (field.x - self.position.x) * self.cell_width,
-                (field.y - self.position.y) * self.cell_height
+                (field.y - self.position.y) * self.cell_width,
+                (field.x - self.position.x) * self.cell_height
             )
             self.image.blit(field_surface, dest)
 
@@ -96,13 +96,12 @@ class Block(pg.sprite.Sprite):
         # draw a single cell sprite for each cell occupied by the block and add it to stationary_sprites group
         for cell_position in self.fields:
             cell_sprite = Cell_Sprite()
-            cell_sprite.rect.topleft = (cell_position.x * self.cell_width, cell_position.y * self.cell_height)
+            cell_sprite.rect.topleft = (cell_position.y * self.cell_width, cell_position.x * self.cell_height)
             cell_sprite.add(stationary_blocks)
-        # add individual cell sprites to the stationary_blocks group
+        check_and_clear()
         new_block()
 
-    # ZDECYDOWAC CZY move CZY RACZEJ _move
-    def move(self, direction, rotation):
+    def _move(self, direction, rotation):
         if len(self.fields) == 0:
             print('Error! This block has no fields (self.fields has length 0)!')
             return
@@ -112,11 +111,11 @@ class Block(pg.sprite.Sprite):
             # oblicz, jeżeli został wskazany kierunek, nową pozycję od której zaczniesz obliczać zajęte pola
             new_position = self.position
             if direction == 'l':
-                new_position = Position(self.position.x - 1, self.position.y)
+                new_position = Position(self.position.x, self.position.y - 1)
             if direction == 'r':
-                new_position = Position(self.position.x + 1, self.position.y)
-            if direction == 'd':
                 new_position = Position(self.position.x, self.position.y + 1)
+            if direction == 'd':
+                new_position = Position(self.position.x + 1, self.position.y)
             # usuń klocek z tablicy stanu gry
             for field in self.fields:
                 game_state[field.x][field.y] = False
@@ -128,10 +127,10 @@ class Block(pg.sprite.Sprite):
             for field in new_fields:
                 # trzeba najpierw sprawdzić, czy klocek nie wychodzi poza planszę i dopiero po upewnieniu się, że nie,
                 # można sprawdzać czy koliduje z innym klockiem na planszy
-                if field.y > no_of_rows - 1:
+                if field.x > no_of_rows - 1:
                     collision_vertical = True
                     break
-                if field.x > no_of_columns - 1 or field.x < 0:
+                if field.y > no_of_columns - 1 or field.y < 0:
                     collision_horizontal = True
                     break
                 # sprawdzanie czy pola stanu gry nie są już zajęte może nastąpić dopiero po upewnieniu się,
@@ -141,19 +140,20 @@ class Block(pg.sprite.Sprite):
                         collision_horizontal = True
                     if direction == 'd':
                         collision_vertical = True
-            # jeśli występuje kolizja pionowo, zatrzymaj klocek
-            if collision_vertical:
-                self._stop()
             # jeśli nie występuje kolizja pionowa ani pozioma, zmień pozycję klocka i zaktualizuj zajmowane przez klocek pola
-            elif not collision_horizontal:
+            if not collision_horizontal and not collision_vertical:
                 self.position = new_position
                 self.fields = new_fields
                 self.rotation = new_rotation
             for field in self.fields:
                 game_state[field.x][field.y] = True
+            # jeśli występuje kolizja pionowo, zatrzymaj klocek
+            # (sprawdzenie musi nastąpić po zapisaniu nowego stanu gry, żeby _stop() działało z bieżącym stanem
+            if collision_vertical:
+                self._stop()
 
     def update(self, direction, rotation):
-        self.move(direction, rotation)
+        self._move(direction, rotation)
         self._draw()
 
     def calculate_fields(self, x, y):
@@ -185,30 +185,30 @@ class L_Block(Block):
         if rotation == 0:
             new_fields = [
                 Position(x, y),
-                Position(x, y + 1),
-                Position(x, y + 2),
-                Position(x + 1, y + 2)
+                Position(x + 1, y),
+                Position(x + 2, y),
+                Position(x + 2, y + 1)
             ]
         if rotation == 90:
             new_fields = [
-                Position(x, y + 1),
-                Position(x, y),
                 Position(x + 1, y),
-                Position(x + 2, y)
+                Position(x, y),
+                Position(x, y + 1),
+                Position(x, y + 2)
             ]
         if rotation == 180:
             new_fields = [
                 Position(x, y),
-                Position(x + 1, y),
+                Position(x, y + 1),
                 Position(x + 1, y + 1),
-                Position(x + 1, y + 2)
+                Position(x + 2, y + 1)
             ]
         if rotation == 270:
             new_fields = [
-                Position(x, y + 1),
+                Position(x + 1, y),
                 Position(x + 1, y + 1),
-                Position(x + 2, y + 1),
-                Position(x + 2, y)
+                Position(x + 1, y + 2),
+                Position(x, y + 2)
             ]
         return new_fields
 
@@ -222,14 +222,14 @@ class Line_Block(Block):
         if rotation in (0, 180):
             new_fields = [
                 Position(x, y),
-                Position(x, y + 1),
-                Position(x, y + 2),
+                Position(x + 1, y),
+                Position(x + 2, y),
             ]
         elif rotation in (90, 270):
             new_fields = [
-                Position(x, y + 1),
+                Position(x + 1, y),
                 Position(x + 1, y + 1),
-                Position(x + 2, y + 1),
+                Position(x + 1, y + 2),
             ]
         return new_fields
 
@@ -243,16 +243,16 @@ class Diagonal_Block(Block):
         if rotation in (0, 180):
             new_fields = [
                 Position(x, y),
-                Position(x, y + 1),
+                Position(x + 1, y),
                 Position(x + 1, y + 1),
-                Position(x + 1, y + 2)
+                Position(x + 2, y + 1)
             ]
         elif rotation in (90, 270):
             new_fields = [
-                Position(x, y + 1),
-                Position(x + 1, y + 1),
                 Position(x + 1, y),
-                Position(x + 2, y)
+                Position(x + 1, y + 1),
+                Position(x, y + 1),
+                Position(x, y + 2)
             ]
         return new_fields
 
@@ -275,29 +275,48 @@ def new_block():
 
 
 def check_and_clear():
-    # JAK MOŻNA TO LEPIEJ ZROBIC, BARDZIEJ PYTHONOWO
     # calculate cell height
     game_window = pg.Surface(screen.get_size())
     cell_height = game_window.get_height() / no_of_rows
     # for each row, calculate if it is full; if it is, remove the row from game state and from the screen, then
     # update all cells above the deleted row so they fall into emptied space both on screen and in game state
-    for j in range(no_of_rows):
+    for (index, row) in enumerate(game_state):
         row_full = True
-        for column in game_state:
-            if not column[j]:
+        for column in row:
+            if not column:
                 row_full = False
                 break
         if row_full:
-            for column in game_state:
-                for j_2 in range(j, -1, -1):
-                    if j_2 > 0:
-                        column[j_2] = column[j_2 - 1]
-                    else:
-                        column[j_2] = False
-            print('row is full')
+            print('Row is full!')
+            for i in range(index, -1, -1):
+                if i > 0:
+                    game_state[i] = game_state[i - 1]
+                else:
+                    game_state[i] = [False]*no_of_columns
             for sprite in stationary_blocks.sprites():
-                rect = sprite.rect
-                rect.move_ip(0, cell_height)
+                if sprite.rect.y - index * cell_height == 0.0:
+                    sprite.remove(stationary_blocks)
+                if sprite.rect.y < index * cell_height:
+                    pg.Rect.move_ip(sprite.rect, 0, cell_height)
+
+
+    # for j in range(no_of_rows):
+    #     row_full = True
+    #     for column in game_state:
+    #         if not column[j]:
+    #             row_full = False
+    #             break
+    #     if row_full:
+    #         for column in game_state:
+    #             for j_2 in range(j, -1, -1):
+    #                 if j_2 > 0:
+    #                     column[j_2] = column[j_2 - 1]
+    #                 else:
+    #                     column[j_2] = False
+    #         print('row is full')
+    #         for sprite in stationary_blocks.sprites():
+    #             rect = sprite.rect
+    #             rect.move_ip(0, cell_height)
 
 # To jakoś ładnie pogrupować i opisać
 running = True
@@ -340,7 +359,6 @@ while running:
             running = False
     if frame_counter >= 15:
         frame_counter = 0
-        check_and_clear()
         moving_blocks.update('d', 0)
         print_game_state_pretty()
     screen.blit(background, (0, 0))
