@@ -21,6 +21,15 @@ data_dir = os.path.join(main_dir, 'data')
 
 no_of_rows = 12
 no_of_columns = 16
+score = 0
+# CZY POWINNAM TO ZROBIĆ JAKO KLASĘ?
+points_for_rows = {
+    0: 0,
+    1: 40,
+    2: 100,
+    3: 300,
+    4: 1200
+}
 # CZEMU TO NIE DZIALA???
 # game_state = [[False]*no_of_rows]*no_of_columns
 
@@ -293,6 +302,7 @@ def check_and_clear():
     # calculate cell height
     game_window = pg.Surface(screen.get_size())
     cell_height = game_window.get_height() / no_of_rows
+    cleared_rows = 0
     # for each row, calculate if it is full; if it is, remove the row from game state and from the screen, then
     # update all cells above the deleted row so they fall into emptied space both on screen and in game state
     for (index, row) in enumerate(game_state):
@@ -303,6 +313,7 @@ def check_and_clear():
                 break
         if row_full:
             print('Row is full!')
+            cleared_rows += 1
             for i in range(index, -1, -1):
                 if i > 0:
                     game_state[i] = game_state[i - 1]
@@ -313,6 +324,11 @@ def check_and_clear():
                     sprite.remove(stationary_blocks)
                 if sprite.rect.y < index * cell_height:
                     pg.Rect.move_ip(sprite.rect, 0, cell_height)
+    global score
+    score += points_for_rows[cleared_rows]
+    if cleared_rows > 0:
+        print(f'score: {score}')
+
 
 
     # for j in range(no_of_rows):
@@ -375,7 +391,6 @@ while running:
     if frame_counter >= 15:
         frame_counter = 0
         moving_blocks.update('d', 0)
-        print_game_state_pretty()
     screen.blit(background, (0, 0))
     moving_blocks.draw(screen)
     stationary_blocks.draw(screen)
