@@ -1,6 +1,7 @@
 # Czy lepiej zrobić tak, że stan gry będzie źródłem wiedzy na temat tego, co na ekranie?
 # pyUnit - do testowania, może jest jakiś dedykowany pygamowi, nawet jeśli nie ma CD to CI w testach ma sens
 # baza danych KURSORY
+# DEKORATORY w pythonie
 # SQL injection - bindowanie żeby zabezpieczyć
 
 # Integracja pyCharm - git
@@ -83,7 +84,7 @@ class Block(pg.sprite.Sprite):
         pg.sprite.Sprite.__init__(self)
         self.add(moving_blocks)
         self.color = color
-        self.position = Position(0, 6)
+        self.position = Position(0, 7)
         self.fields = []
         self.rotation = 0
         game_window = pg.Surface(screen.get_size())
@@ -91,7 +92,7 @@ class Block(pg.sprite.Sprite):
         self.cell_height = game_window.get_height() / no_of_rows
 
     # Create an image of the block sprite
-    def _draw(self):
+    def draw(self):
         # ## Create a 3x3 canvas on which the block will be drawn, extract its rect and position it properly
         self.image = pg.Surface((3 * self.cell_width, 3 * self.cell_height))
         self.image.fill((255, 255, 255))
@@ -174,18 +175,20 @@ class Block(pg.sprite.Sprite):
     # This method will be called by the sprite group and contains methods that should be executed each tick
     def update(self, direction, rotation):
         self._move(direction, rotation)
-        self._draw()
+        self.draw()
 
     # Abstract method indicating that every child class should implement it separately
     def calculate_fields(self, x, y):
         print("Error! calculate_fields class must be defined in a child class")
         return
 
+
 # Class representing the square block. Child class of Block
 class Square_Block(Block):
     def __init__(self, color):
         super().__init__(color)
         self.fields = self.calculate_fields(self.position.x, self.position.y, self.rotation)
+        self.draw()
 
     # Calculate fields occupied by the block, depending on its position and rotation properties
     def calculate_fields(self, x, y, rotation):
@@ -203,6 +206,7 @@ class L_Block(Block):
     def __init__(self, color):
         super().__init__(color)
         self.fields = self.calculate_fields(self.position.x, self.position.y, self.rotation)
+        self.draw()
 
     # Calculate fields occupied by the block, depending on its position and rotation properties
     def calculate_fields(self, x, y, rotation):
@@ -242,6 +246,7 @@ class Line_Block(Block):
     def __init__(self, color):
         super().__init__(color)
         self.fields = self.calculate_fields(self.position.x, self.position.y, self.rotation)
+        self.draw()
 
     # Calculate fields occupied by the block, depending on its position and rotation properties
     def calculate_fields(self, x, y, rotation):
@@ -265,6 +270,7 @@ class Diagonal_Block(Block):
     def __init__(self, color):
         super().__init__(color)
         self.fields = self.calculate_fields(self.position.x, self.position.y, self.rotation)
+        self.draw()
 
     # Calculate fields occupied by the block, depending on its position and rotation properties
     def calculate_fields(self, x, y, rotation):
@@ -313,8 +319,6 @@ def new_block():
             no_room_for_new_block = True
     if no_room_for_new_block:
         pg.display.quit()
-    # ## If the fields are available, update the sprite to make sure that all properties are initialized
-    moving_blocks.update('d', 0)
 
 
 # Check if any row is filled. If it is, update the score, game state and sprites
