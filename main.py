@@ -2,6 +2,8 @@
 # pyUnit - do testowania, może jest jakiś dedykowany pygamowi, nawet jeśli nie ma CD to CI w testach ma sens
 # baza danych KURSORY
 # DEKORATORY w pythonie
+# GENERATORY w pythonie
+# KONTEKSTY i WITH w pythonie
 # SQL injection - bindowanie żeby zabezpieczyć
 
 # Integracja pyCharm - git
@@ -41,7 +43,11 @@ game_state = []
 for i in range(0, no_of_rows):
     row = []
     for j in range(0, no_of_columns):
-        row.append(False)
+        # CZY TO POWINNO BYĆ KLASĄ?
+        row.append({
+            'occupied': False,
+            'color': None
+        })
     game_state.append(row)
 
 
@@ -51,19 +57,29 @@ def print_game_state_pretty():
         row_s = ""
         separator = "_____________________________________________________________"
         for column in row:
-            if column:
-                row_s += 'X\t'
+            if column['occupied']:
+                color = column['color']
+                row_s += f'X, {color}\t'
             else:
                 row_s += '.\t'
         print(row_s)
         if index == no_of_rows - 1:
             print(separator)
 
+def save_game():
+    # zapisz dane aktualnej gry do pliku w linijce na samej górze:
+    return
+
+def load_game():
+    # pobierz dane z pliku, ustaw stan gry, ekran i punkty
+    return
+
 # Helper class for keeping track of cells' coordinates
 class Position:
     def __init__(self, x, y):
         self.x = x
         self.y = y
+
 
 # Helper class for creating sprites representing single cells
 class Cell_Sprite(pg.sprite.Sprite):
@@ -140,7 +156,10 @@ class Block(pg.sprite.Sprite):
             # ## Remove fields representing block's cells from the game state
             # ## (it's necessary for proper collision detection)
             for field in self.fields:
-                game_state[field.x][field.y] = False
+                game_state[field.x][field.y] = {
+                    'occupied': False,
+                    'color': None
+                }
             # ## Detect collisions with borders and other blocks
             collision_horizontal = False
             collision_vertical = False
@@ -153,7 +172,7 @@ class Block(pg.sprite.Sprite):
                     collision_horizontal = True
                     break
                 # ## Detect collisions with other blocks
-                if game_state[field.x][field.y]:
+                if game_state[field.x][field.y]['occupied']:
                     if direction in ('l', 'r') or rotation != 0:
                         collision_horizontal = True
                     if direction == 'd':
@@ -166,7 +185,10 @@ class Block(pg.sprite.Sprite):
             # ## Whether block's properties were updated after collision detection or not, insert their representation
             # ## back into the game state
             for field in self.fields:
-                game_state[field.x][field.y] = True
+                game_state[field.x][field.y] = {
+                    'occupied': True,
+                    'color': self.color
+                }
             # ## If vertical collision was detected, stop the block. This has to be checked after updating game state
             # ## to make sure that the _stop function uses current state
             if collision_vertical:
@@ -315,7 +337,7 @@ def new_block():
     # ## Check if block's initial fields are available. If not, quit the game
     no_room_for_new_block = False
     for field in block.fields:
-        if game_state[field.x][field.y]:
+        if game_state[field.x][field.y]['occupied']:
             no_room_for_new_block = True
     if no_room_for_new_block:
         pg.display.quit()
@@ -332,7 +354,7 @@ def check_and_clear():
     for (index, row) in enumerate(game_state):
         row_full = True
         for column in row:
-            if not column:
+            if not column['occupied']:
                 row_full = False
                 break
         if row_full:
@@ -341,7 +363,10 @@ def check_and_clear():
                 if i > 0:
                     game_state[i] = game_state[i - 1]
                 else:
-                    game_state[i] = [False]*no_of_columns
+                    game_state[i] = [{
+                        'occupied': False,
+                        'color': None
+                    }]*no_of_columns
             for sprite in stationary_blocks.sprites():
                 if sprite.rect.y - index * cell_height == 0.0:
                     sprite.remove(stationary_blocks)
