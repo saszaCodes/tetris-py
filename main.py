@@ -14,6 +14,7 @@
 import pygame as pg
 # import os
 import random
+import datetime
 
 # if not pg.font:
 #     print('Warning: fonts disabled')
@@ -66,9 +67,12 @@ def print_game_state_pretty():
         if index == no_of_rows - 1:
             print(separator)
 
+# Saves current game state with a timestamp to the savegame file
 def save_game():
-    # zapisz dane aktualnej gry do pliku w linijce na samej górze:
-    return
+    with open('./data/savegames.txt', 'a') as file:
+        savegame = f'{datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")}; {game_state}\n'
+        file.write(savegame)
+    print("Game saved!")
 
 def load_game():
     # pobierz dane z pliku, ustaw stan gry, ekran i punkty
@@ -406,6 +410,9 @@ while running:
             running = False
         elif event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
             running = False
+        # ## Key inputs saving and loading the game
+        elif event.type == pg.KEYDOWN and event.key == pg.K_s:
+            save_game()
         # ## Key inputs controlling currently moving block's movement
         elif event.type == pg.KEYDOWN and event.key in (pg.K_RIGHT, pg.K_LEFT, pg.K_DOWN, pg.K_r):
             direction = ''
