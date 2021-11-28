@@ -4,6 +4,7 @@
 # DEKORATORY w pythonie
 # GENERATORY w pythonie
 # KONTEKSTY i WITH w pythonie
+# SERIALIZACJA DANYCH by zapisaci wczytać (pickle.dump, json.dump)
 # SQL injection - bindowanie żeby zabezpieczyć
 
 # Integracja pyCharm - git
@@ -67,16 +68,26 @@ def print_game_state_pretty():
         if index == no_of_rows - 1:
             print(separator)
 
+
 # Saves current game state with a timestamp to the savegame file
 def save_game():
+    cur_moving_sprite = moving_blocks.sprites()[0]
     with open('./data/savegames.txt', 'a') as file:
-        savegame = f'{datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")}; {game_state}\n'
+        savegame = f'' \
+                   f'{datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")}\n' \
+                   f'{game_state}\n' \
+                   f'{score}\n' \
+                   f'{cur_moving_sprite.__class__.__name__}\n' \
+                   f'{cur_moving_sprite.position.x},{cur_moving_sprite.position.y}\n\n'
         file.write(savegame)
     print("Game saved!")
 
+
+# Loads last game from the savegame file, updated game state, display and classes containing blocks
 def load_game():
     # pobierz dane z pliku, ustaw stan gry, ekran i punkty
     return
+
 
 # Helper class for keeping track of cells' coordinates
 class Position:
@@ -413,6 +424,8 @@ while running:
         # ## Key inputs saving and loading the game
         elif event.type == pg.KEYDOWN and event.key == pg.K_s:
             save_game()
+        elif event.type == pg.KEYDOWN and event.key == pg.K_l:
+            load_game()
         # ## Key inputs controlling currently moving block's movement
         elif event.type == pg.KEYDOWN and event.key in (pg.K_RIGHT, pg.K_LEFT, pg.K_DOWN, pg.K_r):
             direction = ''
