@@ -1,4 +1,5 @@
 # Czy lepiej zrobić tak, że stan gry będzie źródłem wiedzy na temat tego, co na ekranie?
+# ambient computing
 # pyUnit - do testowania, może jest jakiś dedykowany pygamowi, nawet jeśli nie ma CD to CI w testach ma sens
 # baza danych KURSORY
 # DEKORATORY w pythonie
@@ -6,6 +7,8 @@
 # KONTEKSTY i WITH w pythonie
 # SERIALIZACJA DANYCH by zapisaci wczytać (pickle.dump, json.dump)
 # SQL injection - bindowanie żeby zabezpieczyć
+# TempleOS
+# Co to CLOSURE
 
 # Integracja pyCharm - git
 # Zrobienie tego online - obgadane
@@ -15,6 +18,7 @@
 import pygame as pg
 # import os
 import random
+import json
 import datetime
 
 # if not pg.font:
@@ -26,6 +30,7 @@ import datetime
 # data_dir = os.path.join(main_dir, 'data')
 
 # Initialize global variables
+random.seed()
 no_of_rows = 12
 no_of_columns = 16
 score = 0
@@ -52,6 +57,12 @@ for i in range(0, no_of_rows):
         })
     game_state.append(row)
 
+# jakich informacji potrzebuję, by odtworzyć stan gry
+# tak naprawdę tylko stationary_blocks, moving_blocks i game_state w formie false / true
+# no dobrze, a jakich danych z _blocks potrzebuję konkretnie?
+# Surface.rect i Surface.image każdego sprite
+# to chyba wszystko!
+
 
 # TYLKO DO DEBUGOWANIA
 def print_game_state_pretty():
@@ -70,23 +81,57 @@ def print_game_state_pretty():
 
 
 # Saves current game state with a timestamp to the savegame file
+
 def save_game():
-    cur_moving_sprite = moving_blocks.sprites()[0]
-    with open('./data/savegames.txt', 'a') as file:
-        savegame = f'' \
-                   f'{datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")}\n' \
-                   f'{game_state}\n' \
-                   f'{score}\n' \
-                   f'{cur_moving_sprite.__class__.__name__}\n' \
-                   f'{cur_moving_sprite.position.x},{cur_moving_sprite.position.y}\n\n'
-        file.write(savegame)
-    print("Game saved!")
+    game_info = moving_blocks.sprites()
+#     cur_moving_sprite = moving_blocks.sprites()[0]
+#     print(cur_moving_sprite.color)
+#     with open('./data/savegames.txt', 'a') as file:
+#         savegame = f'' \
+#                    f'{datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")}\n' \
+#                    f'{game_state}\n' \
+#                    f'{score}\n' \
+#                    f'{cur_moving_sprite.__class__.__name__}\n' \
+#                    f'{cur_moving_sprite.position.x},{cur_moving_sprite.position.y},{cur_moving_sprite.rotation},{cur_moving_sprite.color}\n\n'
+#         file.write(savegame)
+#     print("Game saved!")
+    with open('./data/savegames.json', 'w') as file:
+        serialized_data = json.dumps(game_info)
+        file.write(serialized_data)
 
 
 # Loads last game from the savegame file, updated game state, display and classes containing blocks
 def load_game():
     # pobierz dane z pliku, ustaw stan gry, ekran i punkty
-    return
+    with open('./data/savegames.txt', 'r') as file:
+        loaded_game = file.read().splitlines()[-5:-1]
+        loaded_game_state = loaded_game[0]
+        loaded_score = loaded_game[1]
+        loaded_block_type = loaded_game[2]
+        loaded_block_position = loaded_game[3]
+        print(loaded_game_state)
+        print(int(loaded_score))
+        new_block_data = loaded_block_position.split(',')
+        color = new_block_data[3]
+        str_to_class = {
+            'Diagonal_Block': Diagonal_Block(color),
+            'Square_Block': Square_Block(color),
+            'L_Block': L_Block(color),
+            'Line_Block': Line_Block(color)
+        }
+        print(str_to_class[loaded_block_type])
+        x_coord = int(new_block_data[0])
+        y_coord = int(new_block_data[1])
+        rotation_coord = int(new_block_data[2])
+        print(Position(x_coord, y_coord))
+
+
+# Helper class that keeps track of all data required for saving the game
+class Game_Info:
+    def __init__(self):
+        self.game_state = game_state
+        self.stationary_blocks = stationary_blocks.sprites()
+        self.moving_blocks = moving_blocks.sprites()
 
 
 # Helper class for keeping track of cells' coordinates
@@ -148,6 +193,7 @@ class Block(pg.sprite.Sprite):
             cell_sprite = Cell_Sprite(self.color)
             cell_sprite.rect.topleft = (cell_position.y * self.cell_width, cell_position.x * self.cell_height)
             cell_sprite.add(stationary_blocks)
+        # ewentualnie: dodwanie punktów w osobnym miejscu, np. bezpośrednio w pętli gry lub osobna klasa z metodami obśługującymi punktację
         check_and_clear()
         new_block()
 
@@ -215,7 +261,8 @@ class Block(pg.sprite.Sprite):
         self.draw()
 
     # Abstract method indicating that every child class should implement it separately
-    def calculate_fields(self, x, y):
+    # raise exception instead of printing
+    def calculate_fields(self, x, y, rotation):
         print("Error! calculate_fields class must be defined in a child class")
         return
 
@@ -278,6 +325,44 @@ class L_Block(Block):
         return new_fields
 
 
+class L_Mirror_Block(Block):
+    def __init__(self, color):
+        super().__init__(color)
+        self.fields = self.calculate_fields(self.position.x, self.position.y, self.rotation)
+        self.draw()
+
+    # Calculate fields occupied by the block, depending on its position and rotation properties
+    def calculate_fields(self, x, y, rotation):
+        if rotation == 0:
+            new_fields = [
+                Position(x, y + 1),
+                Position(x + 1, y + 1),
+                Position(x + 2, y + 1),
+                Position(x + 2, y)
+            ]
+        if rotation == 90:
+            new_fields = [
+                Position(x, y),
+                Position(x + 1, y),
+                Position(x + 1, y + 1),
+                Position(x + 1, y + 2)
+            ]
+        if rotation == 180:
+            new_fields = [
+                Position(x, y + 1),
+                Position(x, y),
+                Position(x + 1, y),
+                Position(x + 2, y)
+            ]
+        if rotation == 270:
+            new_fields = [
+                Position(x, y + 1),
+                Position(x, y + 2),
+                Position(x, y + 3),
+                Position(x + 1, y + 3)
+            ]
+        return new_fields
+
 # Class representing the vertical line block. Child class of Block
 class Line_Block(Block):
     def __init__(self, color):
@@ -328,10 +413,73 @@ class Diagonal_Block(Block):
         return new_fields
 
 
+class Diagonal_Mirror_Block(Block):
+    def __init__(self, color):
+        super().__init__(color)
+        self.fields = self.calculate_fields(self.position.x, self.position.y, self.rotation)
+        self.draw()
+
+    # Calculate fields occupied by the block, depending on its position and rotation properties
+    def calculate_fields(self, x, y, rotation):
+        if rotation in (0, 180):
+            new_fields = [
+                Position(x, y + 1),
+                Position(x + 1, y + 1),
+                Position(x + 1, y),
+                Position(x + 2, y)
+            ]
+        elif rotation in (90, 270):
+            new_fields = [
+                Position(x, y),
+                Position(x, y + 1),
+                Position(x + 1, y + 1),
+                Position(x + 1, y + 2)
+            ]
+        return new_fields
+
+
+class Spaceship_Block(Block):
+    def __init__(self, color):
+        super().__init__(color)
+        self.fields = self.calculate_fields(self.position.x, self.position.y, self.rotation)
+        self.draw()
+
+    # Calculate fields occupied by the block, depending on its position and rotation properties
+    def calculate_fields(self, x, y, rotation):
+        if rotation == 0:
+            new_fields = [
+                Position(x, y),
+                Position(x + 1, y),
+                Position(x + 1, y + 1),
+                Position(x + 2, y)
+            ]
+        if rotation == 90:
+            new_fields = [
+                Position(x, y),
+                Position(x, y + 1),
+                Position(x + 1, y + 1),
+                Position(x, y + 2)
+            ]
+        if rotation == 180:
+            new_fields = [
+                Position(x, y + 1),
+                Position(x + 1, y + 1),
+                Position(x + 1, y),
+                Position(x + 2, y + 1)
+            ]
+        if rotation == 270:
+            new_fields = [
+                Position(x + 1, y),
+                Position(x + 1, y + 1),
+                Position(x, y + 1),
+                Position(x + 1, y + 2)
+            ]
+        return new_fields
+
+
 # Create a new block, if possible. If not, exit the game
 def new_block():
     # ## Draw a random color and type of block
-    random.seed()
     colors = [
         (229, 57, 53),
         (30, 136, 229),
@@ -339,8 +487,8 @@ def new_block():
         (0, 137, 123),
     ]
     color = colors[random.randrange(0, colors.__len__())]
-    random.seed()
-    rand_int = random.randrange(0, 4)
+    rand_int = random.randrange(0, 7)
+    # jeszcze dodać statek kosmiczny
     if rand_int == 0:
         block = Square_Block(color)
     elif rand_int == 1:
@@ -349,13 +497,18 @@ def new_block():
         block = Line_Block(color)
     elif rand_int == 3:
         block = Diagonal_Block(color)
+    elif rand_int == 4:
+        block = Spaceship_Block(color)
+    elif rand_int == 5:
+        block = L_Mirror_Block(color)
+    elif rand_int == 6:
+        block = Diagonal_Mirror_Block(color)
     # ## Check if block's initial fields are available. If not, quit the game
-    no_room_for_new_block = False
     for field in block.fields:
         if game_state[field.x][field.y]['occupied']:
-            no_room_for_new_block = True
-    if no_room_for_new_block:
-        pg.display.quit()
+            pg.display.quit()
+            # sprawdzić czy return potrzebny
+            return
 
 
 # Check if any row is filled. If it is, update the score, game state and sprites
@@ -383,11 +536,13 @@ def check_and_clear():
                         'color': None
                     }]*no_of_columns
             for sprite in stationary_blocks.sprites():
+                # sprawdzać position zamiast rect.y
                 if sprite.rect.y - index * cell_height == 0.0:
                     sprite.remove(stationary_blocks)
                 if sprite.rect.y < index * cell_height:
                     pg.Rect.move_ip(sprite.rect, 0, cell_height)
     # ## Update the score and print it to the console
+    # ma zwracać liczbę punktów i w miejscu wywołania dorzucać do score
     global score
     score += points_for_rows[cleared_rows]
     if cleared_rows > 0:
