@@ -58,6 +58,9 @@ class Game_State:
                 row.append(False)
             self.state.append(row)
 
+    def clear_all(self):
+        self.__init__()
+
 game_state = Game_State()
 
 
@@ -91,37 +94,47 @@ def save_game():
         file.write(game_info_serialized)
 
 
-# Loads last game from the savegame file, updated game state, display and classes containing blocks
+# Loads last game from the savegame file, update game state, score and display
 def load_game():
-    # pobierz dane z pliku, ustaw stan gry, ekran i punkty
-    with open('./data/savegames.txt', 'r') as file:
-        loaded_game = file.read().splitlines()[-5:-1]
-        loaded_game_state = loaded_game[0]
-        loaded_score = loaded_game[1]
-        loaded_block_type = loaded_game[2]
-        loaded_block_position = loaded_game[3]
-        print(loaded_game_state)
-        print(int(loaded_score))
-        new_block_data = loaded_block_position.split(',')
-        color = new_block_data[3]
-        str_to_class = {
-            'Diagonal_Block': Diagonal_Block(color),
-            'Square_Block': Square_Block(color),
-            'L_Block': L_Block(color),
-            'Line_Block': Line_Block(color)
-        }
-        print(str_to_class[loaded_block_type])
-        x_coord = int(new_block_data[0])
-        y_coord = int(new_block_data[1])
-        rotation_coord = int(new_block_data[2])
-        print(Position(x_coord, y_coord))
+    # ## load data from savefile and deserialize it
+    with open('./data/savegames.json', 'r') as file:
+        game_info_serialized = file.read()
+        game_info = json.loads(game_info_serialized)
+    # ## Clear current game state
+    game_state.clear_all()
+    print(game_state.state)
+    # ## Clear all currently existing sprites and populate sprite groups using loaded game info. This has to be done
+    # ## before any methods updating the screen or game state are called to make sure any checks running when new blocks
+    # ## are added don't conflict with the current game state
+    moving_blocks.empty()
+    stationary_blocks.empty()
+    # ## Get position and color of each stationary sprite from loaded data and create a new cell sprite using it
+    stationary_blocks_info = game_info['stationary_blocks_info']
+    for block_info in stationary_blocks_info:
+        block_position = Position(block_info['position']['x'], block_info['position']['y'])
+        block_color = block_info['color']
+        Cell_Sprite(block_position, block_color)
+    # ## Get type of block, position and color of the moving sprite and create a new block using this data
+    moving_block_info = game_info['moving_blocks_info'][0]
+    moving_block_type = moving_block_info['class_name']
+    moving_block_position = Position(moving_block_info['position']['x'], moving_block_info['position']['y'])
+    moving_block_color = moving_block_info['color']
+    new_block(type=moving_block_type, position=moving_block_position, color=moving_block_color)
+    # ## Substitute current score with the loaded score
+    score = game_info['score_info']
+    # ## Substitute current game state with the loaded game state. This has to be done after any methods
+    # ## updating the screen or game state are called to make sure any checks running when new blocks
+    # ## are added don't conflict with the new game state
+    game_state.state = game_info['game_state_info']
 
 
-# Helper class that keeps track of all data required for saving the game
+# Helper class used to extract key information about the game state for saving or sending over the internet
 class Game_Info:
     def __init__(self):
         # ## Add current game state to the object
         self.game_state_info = game_state.state
+        # ## Add current points to the object
+        self.score_info = score
         # ## Add necessary info about moving blocks to the object (adding moving_blocks Group causes
         # ## serialization issues; it would also mean serializing and saving redundant data)
         self.moving_blocks_info = []
@@ -140,7 +153,7 @@ class Game_Info:
                 'position': sprite.position,
                 'color': sprite.color
             }
-            self.moving_blocks_info.append(sprite_info)
+            self.stationary_blocks_info.append(sprite_info)
 
     def toJSON(self):
         # CZY TAK ROBIĆ TIMESTAMP CZY JAKOŚ INACZEJ?
@@ -165,18 +178,20 @@ class Cell_Sprite(pg.sprite.Sprite):
         self.cell_width = game_window.get_width() / no_of_columns
         self.cell_height = game_window.get_height() / no_of_rows
         self.image = pg.Surface((self.cell_width, self.cell_height))
-        self.image.fill(color)
+        self.image.fill(self.color)
         self.rect = self.image.get_rect()
+        self.rect.topleft = (self.position.y * self.cell_width, self.position.x * self.cell_height)
+        self.add(stationary_blocks)
 
 
 # Abstract class laying groundwork for each type of block in the game
 class Block(pg.sprite.Sprite):
     # Initialize key properties used by this class and by child classes
-    def __init__(self, color):
+    def __init__(self, position, color):
         pg.sprite.Sprite.__init__(self)
         self.add(moving_blocks)
         self.color = color
-        self.position = Position(0, 7)
+        self.position = position
         self.fields = []
         self.rotation = 0
         game_window = pg.Surface(screen.get_size())
@@ -206,9 +221,7 @@ class Block(pg.sprite.Sprite):
     def _stop(self):
         self.remove(moving_blocks)
         for cell_position in self.fields:
-            cell_sprite = Cell_Sprite(self.position ,self.color)
-            cell_sprite.rect.topleft = (cell_position.y * self.cell_width, cell_position.x * self.cell_height)
-            cell_sprite.add(stationary_blocks)
+            Cell_Sprite(cell_position,self.color)
         # ewentualnie: dodwanie punktów w osobnym miejscu, np. bezpośrednio w pętli gry lub osobna klasa z metodami obśługującymi punktację
         check_and_clear()
         new_block()
@@ -279,8 +292,8 @@ class Block(pg.sprite.Sprite):
 
 # Class representing the square block. Child class of Block
 class Square_Block(Block):
-    def __init__(self, color):
-        super().__init__(color)
+    def __init__(self, position, color):
+        super().__init__(position, color)
         self.fields = self.calculate_fields(self.position.x, self.position.y, self.rotation)
         self.draw()
 
@@ -297,8 +310,8 @@ class Square_Block(Block):
 
 # Class representing the L block. Child class of Block
 class L_Block(Block):
-    def __init__(self, color):
-        super().__init__(color)
+    def __init__(self, position, color):
+        super().__init__(position, color)
         self.fields = self.calculate_fields(self.position.x, self.position.y, self.rotation)
         self.draw()
 
@@ -335,9 +348,10 @@ class L_Block(Block):
         return new_fields
 
 
+# Class representing the mirrored L block. Child class of Block
 class L_Mirror_Block(Block):
-    def __init__(self, color):
-        super().__init__(color)
+    def __init__(self, position, color):
+        super().__init__(position, color)
         self.fields = self.calculate_fields(self.position.x, self.position.y, self.rotation)
         self.draw()
 
@@ -375,8 +389,8 @@ class L_Mirror_Block(Block):
 
 # Class representing the vertical line block. Child class of Block
 class Line_Block(Block):
-    def __init__(self, color):
-        super().__init__(color)
+    def __init__(self, position, color):
+        super().__init__(position, color)
         self.fields = self.calculate_fields(self.position.x, self.position.y, self.rotation)
         self.draw()
 
@@ -399,8 +413,8 @@ class Line_Block(Block):
 
 # Class representing the diagonal block. Child class of Block
 class Diagonal_Block(Block):
-    def __init__(self, color):
-        super().__init__(color)
+    def __init__(self, position, color):
+        super().__init__(position, color)
         self.fields = self.calculate_fields(self.position.x, self.position.y, self.rotation)
         self.draw()
 
@@ -423,9 +437,10 @@ class Diagonal_Block(Block):
         return new_fields
 
 
+# Class representing the mirrored diagonal block. Child class of Block
 class Diagonal_Mirror_Block(Block):
-    def __init__(self, color):
-        super().__init__(color)
+    def __init__(self, position, color):
+        super().__init__(position, color)
         self.fields = self.calculate_fields(self.position.x, self.position.y, self.rotation)
         self.draw()
 
@@ -448,9 +463,10 @@ class Diagonal_Mirror_Block(Block):
         return new_fields
 
 
+# Class representing the spaceship block. Child class of Block
 class Spaceship_Block(Block):
-    def __init__(self, color):
-        super().__init__(color)
+    def __init__(self, position, color):
+        super().__init__(position, color)
         self.fields = self.calculate_fields(self.position.x, self.position.y, self.rotation)
         self.draw()
 
@@ -488,31 +504,62 @@ class Spaceship_Block(Block):
 
 
 # Create a new block, if possible. If not, exit the game
-def new_block():
-    # ## Draw a random color and type of block
-    colors = [
-        (229, 57, 53),
-        (30, 136, 229),
-        (142, 36, 170),
-        (0, 137, 123),
-    ]
-    color = colors[random.randrange(0, colors.__len__())]
-    rand_int = random.randrange(0, 7)
-    # jeszcze dodać statek kosmiczny
-    if rand_int == 0:
-        block = Square_Block(color)
-    elif rand_int == 1:
-        block = L_Block(color)
-    elif rand_int == 2:
-        block = Line_Block(color)
-    elif rand_int == 3:
-        block = Diagonal_Block(color)
-    elif rand_int == 4:
-        block = Spaceship_Block(color)
-    elif rand_int == 5:
-        block = L_Mirror_Block(color)
-    elif rand_int == 6:
-        block = Diagonal_Mirror_Block(color)
+def new_block(**kwargs):
+    # ## If type, color or position was specified, retrieve it from dict with keyword arguments
+    specified_type = kwargs.get('type')
+    specified_color = kwargs.get('color')
+    specified_position = kwargs.get('position')
+    # ## If position was specified in kwargs, use it. If not, use default position
+    if specified_position is not None:
+        position = specified_position
+    else:
+        position = Position(0, 6)
+    # ## If color was specified in kwargs, use it. If not, choose a random color
+    if specified_color is not None:
+        color = specified_color
+    else:
+        # ## Draw a random color
+        colors = [
+            (229, 57, 53),
+            (30, 136, 229),
+            (142, 36, 170),
+            (0, 137, 123),
+        ]
+        color = colors[random.randrange(0, colors.__len__())]
+    # ## If type was specified in kwargs, use it. If not, choose a random block type
+    if specified_type is not None:
+        if specified_type == 'Square_Block':
+            block = Square_Block(position, color)
+        elif specified_type == 'L_Block':
+            block = L_Block(position, color)
+        elif specified_type == 'Line_Block':
+            block = Line_Block(position, color)
+        elif specified_type == 'Diagonal_Block':
+            block = Diagonal_Block(position, color)
+        elif specified_type == 'Spaceship_Block':
+            block = Spaceship_Block(position, color)
+        elif specified_type == 'Diagonal_Mirror_Block':
+            block = Diagonal_Mirror_Block(position, color)
+        # nieaktywne do czasu naprawienia buga z wyświetlaniem przy obrocie
+        # elif specified_type == 'L_Mirror_Block':
+        #     block = L_Mirror_Block(position, color)
+    else:
+        rand_int = random.randrange(0, 6)
+        if rand_int == 0:
+            block = Square_Block(position, color)
+        elif rand_int == 1:
+            block = L_Block(position, color)
+        elif rand_int == 2:
+            block = Line_Block(position, color)
+        elif rand_int == 3:
+            block = Diagonal_Block(position, color)
+        elif rand_int == 4:
+            block = Spaceship_Block(position, color)
+        elif rand_int == 5:
+            block = Diagonal_Mirror_Block(position, color)
+        # nieaktywne do czasu naprawienia buga z wyświetlaniem przy obrocie
+        # elif rand_int == 6:
+        #     block = L_Mirror_Block(position, color)
     # ## Check if block's initial fields are available. If not, quit the game
     for field in block.fields:
         if game_state.state[field.x][field.y]:
