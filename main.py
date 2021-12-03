@@ -55,10 +55,7 @@ class Game_State:
             row = []
             for j in range(0, no_of_columns):
                 # CZY TO POWINNO BYĆ KLASĄ?
-                row.append({
-                    'occupied': False,
-                    'color': None
-                })
+                row.append(False)
             self.state.append(row)
 
 game_state = Game_State()
@@ -77,9 +74,8 @@ def print_game_state_pretty():
         row_s = ""
         separator = "_____________________________________________________________"
         for column in row:
-            if column['occupied']:
-                color = column['color']
-                row_s += f'X, {color}\t'
+            if column:
+                row_s += 'X\t'
             else:
                 row_s += '.\t'
         print(row_s)
@@ -236,10 +232,7 @@ class Block(pg.sprite.Sprite):
             # ## Remove fields representing block's cells from the game state
             # ## (it's necessary for proper collision detection)
             for field in self.fields:
-                game_state.state[field.x][field.y] = {
-                    'occupied': False,
-                    'color': None
-                }
+                game_state.state[field.x][field.y] = False
             # ## Detect collisions with borders and other blocks
             collision_horizontal = False
             collision_vertical = False
@@ -252,7 +245,7 @@ class Block(pg.sprite.Sprite):
                     collision_horizontal = True
                     break
                 # ## Detect collisions with other blocks
-                if game_state.state[field.x][field.y]['occupied']:
+                if game_state.state[field.x][field.y]:
                     if direction in ('l', 'r') or rotation != 0:
                         collision_horizontal = True
                     if direction == 'd':
@@ -265,10 +258,7 @@ class Block(pg.sprite.Sprite):
             # ## Whether block's properties were updated after collision detection or not, insert their representation
             # ## back into the game state
             for field in self.fields:
-                game_state.state[field.x][field.y] = {
-                    'occupied': True,
-                    'color': self.color
-                }
+                game_state.state[field.x][field.y] = True
             # ## If vertical collision was detected, stop the block. This has to be checked after updating game state
             # ## to make sure that the _stop function uses current state
             if collision_vertical:
@@ -524,7 +514,7 @@ def new_block():
         block = Diagonal_Mirror_Block(color)
     # ## Check if block's initial fields are available. If not, quit the game
     for field in block.fields:
-        if game_state.state[field.x][field.y]['occupied']:
+        if game_state.state[field.x][field.y]:
             pg.display.quit()
             # sprawdzić czy return potrzebny
             return
@@ -541,7 +531,7 @@ def check_and_clear():
     for (index, row) in enumerate(game_state.state):
         row_full = True
         for column in row:
-            if not column['occupied']:
+            if not column:
                 row_full = False
                 break
         if row_full:
@@ -550,10 +540,7 @@ def check_and_clear():
                 if i > 0:
                     game_state.state[i] = game_state.state[i - 1]
                 else:
-                    game_state.state[i] = [{
-                        'occupied': False,
-                        'color': None
-                    }]*no_of_columns
+                    game_state.state[i] = [False]*no_of_columns
             for sprite in stationary_blocks.sprites():
                 # sprawdzać position zamiast rect.y
                 if sprite.rect.y - index * cell_height == 0.0:
