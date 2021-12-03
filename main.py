@@ -127,6 +127,7 @@ class Game_Info:
         self.moving_blocks_info = []
         for sprite in moving_blocks.sprites():
             sprite_info = {
+                'class_name': sprite.__class__.__name__,
                 'position': sprite.position,
                 'color': sprite.color
             }
