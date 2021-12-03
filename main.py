@@ -46,17 +46,23 @@ points_for_rows = {
 # CZEMU TO NIE DZIALA???
 # game_state = [[False]*no_of_rows]*no_of_columns
 
-# Create game state - a table of rows
-game_state = []
-for i in range(0, no_of_rows):
-    row = []
-    for j in range(0, no_of_columns):
-        # CZY TO POWINNO BYĆ KLASĄ?
-        row.append({
-            'occupied': False,
-            'color': None
-        })
-    game_state.append(row)
+
+# Class for keeping track of and manipulating current game state
+class Game_State:
+    def __init__(self):
+        self.state = []
+        for i in range(0, no_of_rows):
+            row = []
+            for j in range(0, no_of_columns):
+                # CZY TO POWINNO BYĆ KLASĄ?
+                row.append({
+                    'occupied': False,
+                    'color': None
+                })
+            self.state.append(row)
+
+game_state = Game_State()
+
 
 # jakich informacji potrzebuję, by odtworzyć stan gry
 # tak naprawdę tylko stationary_blocks, moving_blocks i game_state w formie false / true
@@ -67,7 +73,7 @@ for i in range(0, no_of_rows):
 
 # TYLKO DO DEBUGOWANIA
 def print_game_state_pretty():
-    for (index, row) in enumerate(game_state):
+    for (index, row) in enumerate(game_state.state):
         row_s = ""
         separator = "_____________________________________________________________"
         for column in row:
@@ -119,7 +125,7 @@ def load_game():
 class Game_Info:
     def __init__(self):
         # ## Add current game state to the object
-        self.game_state = game_state
+        self.game_state_info = game_state.state
         # ## Add necessary info about moving blocks to the object (adding moving_blocks Group causes
         # ## serialization issues; it would also mean serializing and saving redundant data)
         self.moving_blocks_info = []
@@ -230,7 +236,7 @@ class Block(pg.sprite.Sprite):
             # ## Remove fields representing block's cells from the game state
             # ## (it's necessary for proper collision detection)
             for field in self.fields:
-                game_state[field.x][field.y] = {
+                game_state.state[field.x][field.y] = {
                     'occupied': False,
                     'color': None
                 }
@@ -246,7 +252,7 @@ class Block(pg.sprite.Sprite):
                     collision_horizontal = True
                     break
                 # ## Detect collisions with other blocks
-                if game_state[field.x][field.y]['occupied']:
+                if game_state.state[field.x][field.y]['occupied']:
                     if direction in ('l', 'r') or rotation != 0:
                         collision_horizontal = True
                     if direction == 'd':
@@ -259,7 +265,7 @@ class Block(pg.sprite.Sprite):
             # ## Whether block's properties were updated after collision detection or not, insert their representation
             # ## back into the game state
             for field in self.fields:
-                game_state[field.x][field.y] = {
+                game_state.state[field.x][field.y] = {
                     'occupied': True,
                     'color': self.color
                 }
@@ -518,7 +524,7 @@ def new_block():
         block = Diagonal_Mirror_Block(color)
     # ## Check if block's initial fields are available. If not, quit the game
     for field in block.fields:
-        if game_state[field.x][field.y]['occupied']:
+        if game_state.state[field.x][field.y]['occupied']:
             pg.display.quit()
             # sprawdzić czy return potrzebny
             return
@@ -532,7 +538,7 @@ def check_and_clear():
     cleared_rows = 0
     # ## For each row, calculate if it is full. If it is, remove the row from game state and from the screen, then
     # ## update all cells above the deleted row so they fall into emptied space both on screen and in game state
-    for (index, row) in enumerate(game_state):
+    for (index, row) in enumerate(game_state.state):
         row_full = True
         for column in row:
             if not column['occupied']:
@@ -542,9 +548,9 @@ def check_and_clear():
             cleared_rows += 1
             for i in range(index, -1, -1):
                 if i > 0:
-                    game_state[i] = game_state[i - 1]
+                    game_state.state[i] = game_state.state[i - 1]
                 else:
-                    game_state[i] = [{
+                    game_state.state[i] = [{
                         'occupied': False,
                         'color': None
                     }]*no_of_columns
