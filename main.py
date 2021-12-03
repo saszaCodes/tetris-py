@@ -591,9 +591,9 @@ def check_and_clear():
                     game_state.state[i] = [False]*no_of_columns
             for sprite in stationary_blocks.sprites():
                 # sprawdzać position zamiast rect.y
-                if sprite.rect.y - index * cell_height == 0.0:
+                if sprite.position.x - index == 0.0:
                     sprite.remove(stationary_blocks)
-                if sprite.rect.y < index * cell_height:
+                if sprite.position.x < index:
                     pg.Rect.move_ip(sprite.rect, 0, cell_height)
     # ## Update the score and print it to the console
     # ma zwracać liczbę punktów i w miejscu wywołania dorzucać do score
