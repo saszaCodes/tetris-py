@@ -19,6 +19,7 @@ import pygame as pg
 # import os
 import random
 import json
+import inspect
 import datetime
 
 # if not pg.font:
@@ -81,23 +82,11 @@ def print_game_state_pretty():
 
 
 # Saves current game state with a timestamp to the savegame file
-
 def save_game():
-    game_info = moving_blocks.sprites()
-#     cur_moving_sprite = moving_blocks.sprites()[0]
-#     print(cur_moving_sprite.color)
-#     with open('./data/savegames.txt', 'a') as file:
-#         savegame = f'' \
-#                    f'{datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")}\n' \
-#                    f'{game_state}\n' \
-#                    f'{score}\n' \
-#                    f'{cur_moving_sprite.__class__.__name__}\n' \
-#                    f'{cur_moving_sprite.position.x},{cur_moving_sprite.position.y},{cur_moving_sprite.rotation},{cur_moving_sprite.color}\n\n'
-#         file.write(savegame)
-#     print("Game saved!")
+    game_info = Game_Info()
+    game_info_serialized = game_info.toJSON()
     with open('./data/savegames.json', 'w') as file:
-        serialized_data = json.dumps(game_info)
-        file.write(serialized_data)
+        file.write(game_info_serialized)
 
 
 # Loads last game from the savegame file, updated game state, display and classes containing blocks
@@ -129,9 +118,31 @@ def load_game():
 # Helper class that keeps track of all data required for saving the game
 class Game_Info:
     def __init__(self):
+        # ## Add current game state to the object
         self.game_state = game_state
-        self.stationary_blocks = stationary_blocks.sprites()
-        self.moving_blocks = moving_blocks.sprites()
+        # ## Add necessary info about moving blocks to the object (adding moving_blocks Group causes
+        # ## serialization issues; it would also mean serializing and saving redundant data)
+        self.moving_blocks_info = []
+        for sprite in moving_blocks.sprites():
+            sprite_info = {
+                'position': sprite.position,
+                'color': sprite.color
+            }
+            self.moving_blocks_info.append(sprite_info)
+        # ## Add necessary info about moving blocks to the object (adding stationary Group causes
+        # ## serialization issues; it would also mean serializing and saving redundant data)
+        self.stationary_blocks_info = []
+        for sprite in stationary_blocks.sprites():
+            sprite_info = {
+                'position': sprite.position,
+                'color': sprite.color
+            }
+            self.moving_blocks_info.append(sprite_info)
+
+    def toJSON(self):
+        # CZY TAK ROBIĆ TIMESTAMP CZY JAKOŚ INACZEJ?
+        self.timestamp = datetime.datetime.now().isoformat()
+        return json.dumps(self, default=lambda o: o.__dict__)
 
 
 # Helper class for keeping track of cells' coordinates
@@ -143,8 +154,10 @@ class Position:
 
 # Helper class for creating sprites representing single cells
 class Cell_Sprite(pg.sprite.Sprite):
-    def __init__(self, color):
+    def __init__(self, position, color):
         pg.sprite.Sprite.__init__(self)
+        self.position = position
+        self.color = color
         game_window = pg.Surface(screen.get_size())
         self.cell_width = game_window.get_width() / no_of_columns
         self.cell_height = game_window.get_height() / no_of_rows
@@ -190,7 +203,7 @@ class Block(pg.sprite.Sprite):
     def _stop(self):
         self.remove(moving_blocks)
         for cell_position in self.fields:
-            cell_sprite = Cell_Sprite(self.color)
+            cell_sprite = Cell_Sprite(self.position ,self.color)
             cell_sprite.rect.topleft = (cell_position.y * self.cell_width, cell_position.x * self.cell_height)
             cell_sprite.add(stationary_blocks)
         # ewentualnie: dodwanie punktów w osobnym miejscu, np. bezpośrednio w pętli gry lub osobna klasa z metodami obśługującymi punktację
