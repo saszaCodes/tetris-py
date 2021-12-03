@@ -60,6 +60,13 @@ class Game_State:
 
     def clear_all(self):
         self.__init__()
+        
+    def clear_row(self, index):
+        for i in range(index, -1, -1):
+            if i > 0:
+                game_state.state[i] = game_state.state[i - 1]
+            else:
+                game_state.state[i] = [False] * no_of_columns
 
 game_state = Game_State()
 
@@ -584,13 +591,8 @@ def check_and_clear():
                 break
         if row_full:
             cleared_rows += 1
-            for i in range(index, -1, -1):
-                if i > 0:
-                    game_state.state[i] = game_state.state[i - 1]
-                else:
-                    game_state.state[i] = [False]*no_of_columns
+            game_state.clear_row(index)
             for sprite in stationary_blocks.sprites():
-                # sprawdzać position zamiast rect.y
                 if sprite.position.x - index == 0.0:
                     sprite.remove(stationary_blocks)
                 if sprite.position.x < index:
