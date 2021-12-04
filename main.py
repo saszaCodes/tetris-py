@@ -93,6 +93,11 @@ def print_game_state_pretty():
             print(separator)
 
 
+# Pauses the game
+def pause_game():
+    return
+
+
 # Saves current game state with a timestamp to the savegame file
 def save_game():
     game_info = Game_Info()
@@ -648,6 +653,30 @@ while running:
             if event.key == pg.K_r:
                 rotation = 90
             moving_blocks.update(direction, rotation)
+        # ## Key input for pausing the game
+        elif event.type == pg.KEYDOWN and event.key == pg.K_p:
+            paused = True
+            while paused:
+                # ## When paused, tick the frame_clock to be able to react when user clicks the pause button again,
+                # ## but don't increase the frame_counter. It should be increased only when the game is actually running
+                frame_clock.tick(30)
+                for event in pg.event.get():
+                    # ## Key input for unpausing
+                    if event.type == pg.KEYDOWN and event.key == pg.K_p:
+                        paused = False
+                    # ## Key inputs quitting the game
+                    elif event.type == pg.QUIT:
+                        running = False
+                        paused = False
+                    elif event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
+                        running = False
+                        paused = False
+                    # ## Key inputs saving and loading the game
+                    elif event.type == pg.KEYDOWN and event.key == pg.K_s:
+                        save_game()
+                    elif event.type == pg.KEYDOWN and event.key == pg.K_l:
+                        load_game()
+                        paused = False
     # ## Every 15 ticks move currently moving block down
     if frame_counter >= 15:
         frame_counter = 0
