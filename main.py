@@ -47,9 +47,10 @@ points_for_rows = {
 # game_state = [[False]*no_of_rows]*no_of_columns
 
 
-# Class for keeping track of and manipulating current game state
+# Class for keeping track of and manipulating current game state and score
 class Game_State:
     def __init__(self):
+        self.score = 0
         self.state = []
         for i in range(0, no_of_rows):
             row = []
@@ -58,9 +59,9 @@ class Game_State:
                 row.append(False)
             self.state.append(row)
 
-    def clear_all(self):
+    def clear_all_rows(self):
         self.__init__()
-        
+
     def clear_row(self, index):
         for i in range(index, -1, -1):
             if i > 0:
@@ -108,7 +109,7 @@ def load_game():
         game_info_serialized = file.read()
         game_info = json.loads(game_info_serialized)
     # ## Clear current game state
-    game_state.clear_all()
+    game_state.clear_all_rows()
     print(game_state.state)
     # ## Clear all currently existing sprites and populate sprite groups using loaded game info. This has to be done
     # ## before any methods updating the screen or game state are called to make sure any checks running when new blocks
@@ -141,7 +142,7 @@ class Game_Info:
         # ## Add current game state to the object
         self.game_state_info = game_state.state
         # ## Add current points to the object
-        self.score_info = score
+        self.score_info = game_state.score
         # ## Add necessary info about moving blocks to the object (adding moving_blocks Group causes
         # ## serialization issues; it would also mean serializing and saving redundant data)
         self.moving_blocks_info = []
@@ -599,8 +600,7 @@ def check_and_clear():
                     pg.Rect.move_ip(sprite.rect, 0, cell_height)
     # ## Update the score and print it to the console
     # ma zwracać liczbę punktów i w miejscu wywołania dorzucać do score
-    global score
-    score += points_for_rows[cleared_rows]
+    game_state.score += points_for_rows[cleared_rows]
     if cleared_rows > 0:
         print(f'score: {score}')
 
