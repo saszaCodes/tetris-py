@@ -34,7 +34,6 @@ import datetime
 random.seed()
 no_of_rows = 12
 no_of_columns = 16
-score = 0
 # CZY POWINNAM TO ZROBIĆ JAKO KLASĘ?
 points_for_rows = {
     0: 0,
@@ -602,7 +601,8 @@ def check_and_clear():
     # ma zwracać liczbę punktów i w miejscu wywołania dorzucać do score
     game_state.score += points_for_rows[cleared_rows]
     if cleared_rows > 0:
-        print(f'score: {score}')
+        print(cleared_rows)
+        print(f'score: {game_state.score}')
 
 
 # Initialize variables controlling the game display and clock - frames and ticks
