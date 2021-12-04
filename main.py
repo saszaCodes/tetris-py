@@ -387,10 +387,10 @@ class L_Mirror_Block(Block):
             ]
         if rotation == 270:
             new_fields = [
+                Position(x, y),
                 Position(x, y + 1),
                 Position(x, y + 2),
-                Position(x, y + 3),
-                Position(x + 1, y + 3)
+                Position(x + 1, y + 2)
             ]
         return new_fields
 
@@ -547,9 +547,8 @@ def new_block(**kwargs):
             block = Spaceship_Block(position, color)
         elif specified_type == 'Diagonal_Mirror_Block':
             block = Diagonal_Mirror_Block(position, color)
-        # nieaktywne do czasu naprawienia buga z wyświetlaniem przy obrocie
-        # elif specified_type == 'L_Mirror_Block':
-        #     block = L_Mirror_Block(position, color)
+        elif specified_type == 'L_Mirror_Block':
+            block = L_Mirror_Block(position, color)
     else:
         rand_int = random.randrange(0, 6)
         if rand_int == 0:
@@ -564,9 +563,8 @@ def new_block(**kwargs):
             block = Spaceship_Block(position, color)
         elif rand_int == 5:
             block = Diagonal_Mirror_Block(position, color)
-        # nieaktywne do czasu naprawienia buga z wyświetlaniem przy obrocie
-        # elif rand_int == 6:
-        #     block = L_Mirror_Block(position, color)
+        elif rand_int == 6:
+            block = L_Mirror_Block(position, color)
     # ## Check if block's initial fields are available. If not, quit the game
     for field in block.fields:
         if game_state.state[field.x][field.y]:
