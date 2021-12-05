@@ -227,7 +227,7 @@ class Cell_Sprite(pg.sprite.Sprite):
         pg.sprite.Sprite.__init__(self)
         self.position = position
         self.color = color
-        game_window = pg.Surface(screen.get_size())
+        game_window = pg.Surface(game_area.get_size())
         self.cell_width = game_window.get_width() / default_settings.no_of_columns
         self.cell_height = game_window.get_height() / default_settings.no_of_rows
         sprite_filename = default_settings.color_to_filename[color]
@@ -248,7 +248,7 @@ class Block(pg.sprite.Sprite):
         self.position = position
         self.fields = []
         self.rotation = rotation
-        game_window = pg.Surface(screen.get_size())
+        game_window = pg.Surface(game_area.get_size())
         self.cell_width = game_window.get_width() / default_settings.no_of_columns
         self.cell_height = game_window.get_height() / default_settings.no_of_rows
 
@@ -611,7 +611,7 @@ def new_block(**kwargs):
 # Check if any row is filled. If it is, update the score, game state and sprites
 def check_and_clear():
     # ## Get cell height and initialize variable keeping track of cleared rows
-    game_window = pg.Surface(screen.get_size())
+    game_window = pg.Surface(game_area.get_size())
     cell_height = game_window.get_height() / default_settings.no_of_rows
     cleared_rows = 0
     # ## For each row, calculate if it is full. If it is, remove the row from game state and from the screen, then
@@ -648,11 +648,19 @@ running = True
 pg.init()
 frame_clock = pg.time.Clock()
 frame_counter = 0
-screen = pg.display.set_mode((640, 480))
-background = pg.Surface(screen.get_size())
-background = background.convert()
-background.fill((255, 255, 255))
-screen.blit(background, (0, 0))
+screen = pg.display.set_mode((940, 480))
+# background = pg.Surface(screen.get_size())
+# background = background.convert()
+# background.fill((255, 255, 255))
+game_area = pg.Surface((640, 480))
+game_area = game_area.convert()
+game_area.fill((255, 255, 255))
+ui_area = pg.Surface((300, 480))
+ui_area = ui_area.convert()
+ui_area.fill((0, 0, 0))
+screen.blit(game_area, (0, 0))
+screen.blit(ui_area, (640, 0))
+# screen.blit(background, (0, 0))
 pg.display.flip()
 # Initialize sprite groups
 moving_blocks = pg.sprite.Group()
@@ -717,7 +725,9 @@ while running:
         frame_counter = 0
         moving_blocks.update('d', 0)
     # ## Update the display
-    screen.blit(background, (0, 0))
+    screen.blit(game_area, (0, 0))
+    screen.blit(ui_area, (640, 0))
+    # screen.blit(background, (0, 0))
     moving_blocks.draw(screen)
     stationary_blocks.draw(screen)
     pg.display.flip()
