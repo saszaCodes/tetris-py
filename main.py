@@ -39,6 +39,19 @@ random.seed()
 # Class for keeping the default settings for game objects
 class Default_Settings:
     def __init__(self):
+        # ## Available block names (types) and constructor functions for each name (type)
+        self.block_names = ['Square_Block', 'L_Block', 'Line_Block', 'Diagonal_Block', 'Spaceship_Block',
+                            'Diagonal_Mirror_Block', 'L_Mirror_Block']
+        self.block_name_to_constructor = {
+            'Square_Block': lambda position, rotation, color: Square_Block(position, rotation, color),
+            'L_Block': lambda position, rotation, color: L_Block(position, rotation, color),
+            'Line_Block': lambda position, rotation, color: Line_Block(position, rotation, color),
+            'Diagonal_Block': lambda position, rotation, color: Diagonal_Block(position, rotation, color),
+            'Spaceship_Block': lambda position, rotation, color: Spaceship_Block(position, rotation, color),
+            'Diagonal_Mirror_Block': lambda position, rotation, color: Diagonal_Mirror_Block(position, rotation, color),
+            'L_Mirror_Block': lambda position, rotation, color: L_Mirror_Block(position, rotation, color)
+        }
+        # ## Available block colors and corresponding filenames with cell sprites
         self.block_colors = ['purple', 'yellow', 'green', 'red']
         self.color_to_filename = {
             'purple': 'purple-block.bmp',
@@ -46,8 +59,10 @@ class Default_Settings:
             'green': 'yellow-block.bmp',
             'red': 'red-block.bmp'
         }
+        # ## Default rotation, position of a new block
         self.block_rotation = 0
         self.block_position = Position(0, 6)
+        # ## Scoring system
         self.points_for_rows = {
             0: 0,
             1: 40,
@@ -55,21 +70,31 @@ class Default_Settings:
             3: 300,
             4: 1200
         }
+        # ## Dimenstions of the game's grid
         self.no_of_rows = 12
         self.no_of_columns = 16
+        # ## Number of next blocks to show
+        self.no_of_next_blocks = 3
 
 
-# Class for keeping track of and manipulating current game state and score
+# Class for keeping track of and manipulating current game state
 class Game_State:
     def __init__(self):
         self.score = 0
+        # ## When the game_state object is created, fill the game state with Falses
         self.state = []
         for i in range(0, default_settings.no_of_rows):
             row = []
             for j in range(0, default_settings.no_of_columns):
-                # CZY TO POWINNO BYĆ KLASĄ?
                 row.append(False)
             self.state.append(row)
+        # ## When the game_state object is created, fill the array of next blocks with random block types
+        self.next_blocks = []
+        for i in range(0, default_settings.no_of_next_blocks):
+            block_types = default_settings.block_names
+            block_type = block_types[random.randrange(0, block_types.__len__())]
+            self.next_blocks.append(block_type)
+        print(self.next_blocks)
 
     def clear_all_rows(self):
         self.__init__()
@@ -125,7 +150,6 @@ def load_game():
         game_info = json.loads(game_info_serialized)
     # ## Clear current game state
     game_state.clear_all_rows()
-    print_game_state_pretty()
     # ## Clear all currently existing sprites and populate sprite groups using loaded game info. This has to be done
     # ## before any methods updating the screen or game state are called to make sure any checks running when new blocks
     # ## are added don't conflict with the current game state
@@ -146,11 +170,12 @@ def load_game():
     new_block(type=moving_block_type, position=moving_block_position, rotation=moving_block_rotation, color=moving_block_color)
     # ## Substitute current score with the loaded score
     game_state.score = game_info['score_info']
+    # ## Substitute current next_blocks list with the loaded list
+    game_state.next_blocks = game_info['next_blocks_info']
     # ## Substitute current game state with the loaded game state. This has to be done after any methods
     # ## updating the screen or game state are called to make sure any checks running when new blocks
     # ## are added don't conflict with the new game state
     game_state.state = game_info['game_state_info']
-    print_game_state_pretty()
 
 
 # Helper class used to extract key information about the game state for saving or sending over the internet
@@ -160,6 +185,8 @@ class Game_Info:
         self.game_state_info = game_state.state
         # ## Add current points to the object
         self.score_info = game_state.score
+        # ## Add current next_blocks list to the object
+        self.next_blocks_info = game_state.next_blocks
         # ## Add necessary info about moving blocks to the object (adding moving_blocks Group causes
         # ## serialization issues; it would also mean serializing and saving redundant data)
         self.moving_blocks_info = []
@@ -252,6 +279,7 @@ class Block(pg.sprite.Sprite):
             Cell_Sprite(cell_position, self.color)
         # ewentualnie: dodwanie punktów w osobnym miejscu, np. bezpośrednio w pętli gry lub osobna klasa z metodami obśługującymi punktację
         check_and_clear()
+        print(game_state.next_blocks)
         new_block()
 
     # Move or rotate the block if possible, detect collisions and act accordingly
@@ -556,38 +584,22 @@ def new_block(**kwargs):
         # ## Draw a random color
         colors = default_settings.block_colors
         color = colors[random.randrange(0, colors.__len__())]
-    # ## If type was specified in kwargs, use it. If not, choose a random block type
+    # ## If type was specified in kwargs, use it. If not, choose a the next block from the game_state.next_blocks list
     if specified_type is not None:
-        if specified_type == 'Square_Block':
-            block = Square_Block(position, rotation, color)
-        elif specified_type == 'L_Block':
-            block = L_Block(position, rotation, color)
-        elif specified_type == 'Line_Block':
-            block = Line_Block(position, rotation, color)
-        elif specified_type == 'Diagonal_Block':
-            block = Diagonal_Block(position, rotation, color)
-        elif specified_type == 'Spaceship_Block':
-            block = Spaceship_Block(position, rotation, color)
-        elif specified_type == 'Diagonal_Mirror_Block':
-            block = Diagonal_Mirror_Block(position, rotation, color)
-        elif specified_type == 'L_Mirror_Block':
-            block = L_Mirror_Block(position, rotation, color)
+        block_constructor = default_settings.block_name_to_constructor[specified_type]
+        block = block_constructor(position, rotation, color)
     else:
-        rand_int = random.randrange(0, 6)
-        if rand_int == 0:
-            block = Square_Block(position, rotation, color)
-        elif rand_int == 1:
-            block = L_Block(position, rotation, color)
-        elif rand_int == 2:
-            block = Line_Block(position, rotation, color)
-        elif rand_int == 3:
-            block = Diagonal_Block(position, rotation, color)
-        elif rand_int == 4:
-            block = Spaceship_Block(position, rotation, color)
-        elif rand_int == 5:
-            block = Diagonal_Mirror_Block(position, rotation, color)
-        elif rand_int == 6:
-            block = L_Mirror_Block(position, color)
+        # ## Take the first block from the game_state.next_blocks list, then delete it from the list and add a new
+        # ## block at the end
+        next_blocks = game_state.next_blocks
+        types = default_settings.block_names
+        type = next_blocks[0]
+        type_to_append = types[random.randrange(0, types.__len__())]
+        next_blocks.append(type_to_append)
+        game_state.next_blocks = next_blocks[1:]
+        # ## Get the block constructor function and run it with appropriate arguments
+        block_constructor = default_settings.block_name_to_constructor[type]
+        block = block_constructor(position, rotation, color)
     # ## Check if block's initial fields are available. If not, quit the game
     for field in block.fields:
         if game_state.state[field.x][field.y]:
