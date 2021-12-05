@@ -30,11 +30,9 @@ main_dir = os.path.split(os.path.abspath(__file__))[0]
 assets_dir = os.path.join(main_dir, 'assets')
 # data_dir = os.path.join(main_dir, 'data')
 
-# Initialize global variables
+# Initialize random module
 random.seed()
-no_of_rows = 12
-no_of_columns = 16
-# CZY POWINNAM TO ZROBIĆ JAKO KLASĘ?# CZEMU TO NIE DZIALA???
+# CZEMU TO NIE DZIALA???
 # game_state = [[False]*no_of_rows]*no_of_columns
 
 
@@ -57,6 +55,8 @@ class Default_Settings:
             3: 300,
             4: 1200
         }
+        self.no_of_rows = 12
+        self.no_of_columns = 16
 
 
 # Class for keeping track of and manipulating current game state and score
@@ -64,9 +64,9 @@ class Game_State:
     def __init__(self):
         self.score = 0
         self.state = []
-        for i in range(0, no_of_rows):
+        for i in range(0, default_settings.no_of_rows):
             row = []
-            for j in range(0, no_of_columns):
+            for j in range(0, default_settings.no_of_columns):
                 # CZY TO POWINNO BYĆ KLASĄ?
                 row.append(False)
             self.state.append(row)
@@ -79,7 +79,7 @@ class Game_State:
             if i > 0:
                 game_state.state[i] = game_state.state[i - 1]
             else:
-                game_state.state[i] = [False] * no_of_columns
+                game_state.state[i] = [False] * default_settings.no_of_columns
 
 
 # jakich informacji potrzebuję, by odtworzyć stan gry
@@ -100,7 +100,7 @@ def print_game_state_pretty():
             else:
                 row_s += '.\t'
         print(row_s)
-        if index == no_of_rows - 1:
+        if index == default_settings.no_of_rows - 1:
             print(separator)
 
 
@@ -200,8 +200,8 @@ class Cell_Sprite(pg.sprite.Sprite):
         self.position = position
         self.color = color
         game_window = pg.Surface(screen.get_size())
-        self.cell_width = game_window.get_width() / no_of_columns
-        self.cell_height = game_window.get_height() / no_of_rows
+        self.cell_width = game_window.get_width() / default_settings.no_of_columns
+        self.cell_height = game_window.get_height() / default_settings.no_of_rows
         sprite_filename = default_settings.color_to_filename[color]
         self.image = pg.image.load(os.path.join(assets_dir, sprite_filename)).convert()
         self.image = pg.transform.scale(self.image, (self.cell_width, self.cell_height))
@@ -221,8 +221,8 @@ class Block(pg.sprite.Sprite):
         self.fields = []
         self.rotation = rotation
         game_window = pg.Surface(screen.get_size())
-        self.cell_width = game_window.get_width() / no_of_columns
-        self.cell_height = game_window.get_height() / no_of_rows
+        self.cell_width = game_window.get_width() / default_settings.no_of_columns
+        self.cell_height = game_window.get_height() / default_settings.no_of_rows
 
     # Create an image of the block sprite
     def draw(self):
@@ -279,10 +279,10 @@ class Block(pg.sprite.Sprite):
             collision_vertical = False
             for field in new_fields:
                 # ## Detecting collisions with borders must come first, as game_state doesn't exist outside of them
-                if field.x > no_of_rows - 1:
+                if field.x > default_settings.no_of_rows - 1:
                     collision_vertical = True
                     break
-                if field.y > no_of_columns - 1 or field.y < 0:
+                if field.y > default_settings.no_of_columns - 1 or field.y < 0:
                     collision_horizontal = True
                     break
                 # ## Detect collisions with other blocks
@@ -599,7 +599,7 @@ def new_block(**kwargs):
 def check_and_clear():
     # ## Get cell height and initialize variable keeping track of cleared rows
     game_window = pg.Surface(screen.get_size())
-    cell_height = game_window.get_height() / no_of_rows
+    cell_height = game_window.get_height() / default_settings.no_of_rows
     cleared_rows = 0
     # ## For each row, calculate if it is full. If it is, remove the row from game state and from the screen, then
     # ## update all cells above the deleted row so they fall into emptied space both on screen and in game state
@@ -626,8 +626,8 @@ def check_and_clear():
 
 
 # Initialize objects used by other functions and methods
-game_state = Game_State()
 default_settings = Default_Settings()
+game_state = Game_State()
 # Initialize variables controlling the game display and clock - frames and ticks
 running = True
 pg.init()
