@@ -16,10 +16,9 @@
 # praca na repo - branche, updaty itede
 
 import pygame as pg
-# import os
+import os
 import random
 import json
-import inspect
 import datetime
 
 # if not pg.font:
@@ -27,35 +26,37 @@ import datetime
 # if not pg.mixer:
 #     print('Warning: sound disabled')
 #
-# main_dir = os.path.split(os.path.abspath(__file__))[0]
+main_dir = os.path.split(os.path.abspath(__file__))[0]
+assets_dir = os.path.join(main_dir, 'assets')
 # data_dir = os.path.join(main_dir, 'data')
 
 # Initialize global variables
 random.seed()
 no_of_rows = 12
 no_of_columns = 16
-# CZY POWINNAM TO ZROBIĆ JAKO KLASĘ?
-points_for_rows = {
-    0: 0,
-    1: 40,
-    2: 100,
-    3: 300,
-    4: 1200
-}
-# CZEMU TO NIE DZIALA???
+# CZY POWINNAM TO ZROBIĆ JAKO KLASĘ?# CZEMU TO NIE DZIALA???
 # game_state = [[False]*no_of_rows]*no_of_columns
 
 
+# Class for keeping the default settings for game objects
 class Default_Settings:
     def __init__(self):
-        self.block_colors = [
-            (229, 57, 53),
-            (30, 136, 229),
-            (142, 36, 170),
-            (0, 137, 123),
-        ]
+        self.block_colors = ['purple', 'yellow', 'green', 'red']
+        self.color_to_filename = {
+            'purple': 'purple-block.bmp',
+            'yellow': 'green-block.bmp',
+            'green': 'yellow-block.bmp',
+            'red': 'red-block.bmp'
+        }
         self.block_rotation = 0
         self.block_position = Position(0, 6)
+        self.points_for_rows = {
+            0: 0,
+            1: 40,
+            2: 100,
+            3: 300,
+            4: 1200
+        }
 
 
 # Class for keeping track of and manipulating current game state and score
@@ -201,8 +202,9 @@ class Cell_Sprite(pg.sprite.Sprite):
         game_window = pg.Surface(screen.get_size())
         self.cell_width = game_window.get_width() / no_of_columns
         self.cell_height = game_window.get_height() / no_of_rows
-        self.image = pg.Surface((self.cell_width, self.cell_height))
-        self.image.fill(self.color)
+        sprite_filename = default_settings.color_to_filename[color]
+        self.image = pg.image.load(os.path.join(assets_dir, sprite_filename)).convert()
+        self.image = pg.transform.scale(self.image, (self.cell_width, self.cell_height))
         self.rect = self.image.get_rect()
         self.rect.topleft = (self.position.y * self.cell_width, self.position.x * self.cell_height)
         self.add(stationary_blocks)
@@ -232,20 +234,21 @@ class Block(pg.sprite.Sprite):
         self.rect.topleft = (self.position.y * self.cell_width, self.position.x * self.cell_height)
         # ## Draw each individual cell onto the canvas
         for field in self.fields:
-            field_surface = pg.Surface((self.cell_width, self.cell_height))
-            field_surface.fill(self.color)
+            cell_sprite_filename = default_settings.color_to_filename[self.color]
+            cell_image = pg.image.load(os.path.join(assets_dir, cell_sprite_filename)).convert()
+            cell_image = pg.transform.scale(cell_image, (self.cell_width, self.cell_height))
             dest = (
                 (field.y - self.position.y) * self.cell_width,
                 (field.x - self.position.x) * self.cell_height
             )
-            self.image.blit(field_surface, dest)
+            self.image.blit(cell_image, dest)
 
     # Stop this block, move it to the stationary_blocks group as individual cells,
     # clear rows if necessary and initialize a new block
     def _stop(self):
         self.remove(moving_blocks)
         for cell_position in self.fields:
-            Cell_Sprite(cell_position,self.color)
+            Cell_Sprite(cell_position, self.color)
         # ewentualnie: dodwanie punktów w osobnym miejscu, np. bezpośrednio w pętli gry lub osobna klasa z metodami obśługującymi punktację
         check_and_clear()
         new_block()
@@ -410,6 +413,7 @@ class L_Mirror_Block(Block):
                 Position(x + 1, y + 2)
             ]
         return new_fields
+
 
 # Class representing the vertical line block. Child class of Block
 class Line_Block(Block):
@@ -615,10 +619,11 @@ def check_and_clear():
                     pg.Rect.move_ip(sprite.rect, 0, cell_height)
     # ## Update the score and print it to the console
     # ma zwracać liczbę punktów i w miejscu wywołania dorzucać do score
-    game_state.score += points_for_rows[cleared_rows]
+    game_state.score += default_settings.points_for_rows[cleared_rows]
     if cleared_rows > 0:
         print(cleared_rows)
         print(f'score: {game_state.score}')
+
 
 # Initialize objects used by other functions and methods
 game_state = Game_State()
