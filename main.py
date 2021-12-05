@@ -46,6 +46,18 @@ points_for_rows = {
 # game_state = [[False]*no_of_rows]*no_of_columns
 
 
+class Default_Settings:
+    def __init__(self):
+        self.block_colors = [
+            (229, 57, 53),
+            (30, 136, 229),
+            (142, 36, 170),
+            (0, 137, 123),
+        ]
+        self.block_rotation = 0
+        self.block_position = Position(0, 6)
+
+
 # Class for keeping track of and manipulating current game state and score
 class Game_State:
     def __init__(self):
@@ -67,8 +79,6 @@ class Game_State:
                 game_state.state[i] = game_state.state[i - 1]
             else:
                 game_state.state[i] = [False] * no_of_columns
-
-game_state = Game_State()
 
 
 # jakich informacji potrzebuję, by odtworzyć stan gry
@@ -528,23 +538,18 @@ def new_block(**kwargs):
     if specified_position is not None:
         position = specified_position
     else:
-        position = Position(0, 6)
+        position = default_settings.block_position
     # ## If rotation was specified in kwargs, use it. If not, use default value
     if specified_rotation is not None:
         rotation = specified_rotation
     else:
-        rotation = 0
+        rotation = default_settings.block_rotation
     # ## If color was specified in kwargs, use it. If not, choose a random color
     if specified_color is not None:
         color = specified_color
     else:
         # ## Draw a random color
-        colors = [
-            (229, 57, 53),
-            (30, 136, 229),
-            (142, 36, 170),
-            (0, 137, 123),
-        ]
+        colors = default_settings.block_colors
         color = colors[random.randrange(0, colors.__len__())]
     # ## If type was specified in kwargs, use it. If not, choose a random block type
     if specified_type is not None:
@@ -615,7 +620,9 @@ def check_and_clear():
         print(cleared_rows)
         print(f'score: {game_state.score}')
 
-
+# Initialize objects used by other functions and methods
+game_state = Game_State()
+default_settings = Default_Settings()
 # Initialize variables controlling the game display and clock - frames and ticks
 running = True
 pg.init()
