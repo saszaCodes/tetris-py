@@ -126,12 +126,13 @@ def load_game():
         block_position = Position(block_info['position']['x'], block_info['position']['y'])
         block_color = block_info['color']
         Cell_Sprite(block_position, block_color)
-    # ## Get type of block, position and color of the moving sprite and create a new block using this data
+    # ## Get type of block, position, rotation and color of the moving sprite and create a new block using this data
     moving_block_info = game_info['moving_blocks_info'][0]
     moving_block_type = moving_block_info['class_name']
     moving_block_position = Position(moving_block_info['position']['x'], moving_block_info['position']['y'])
+    moving_block_rotation = moving_block_info['rotation']
     moving_block_color = moving_block_info['color']
-    new_block(type=moving_block_type, position=moving_block_position, color=moving_block_color)
+    new_block(type=moving_block_type, position=moving_block_position, rotation=moving_block_rotation, color=moving_block_color)
     # ## Substitute current score with the loaded score
     score = game_info['score_info']
     # ## Substitute current game state with the loaded game state. This has to be done after any methods
@@ -154,7 +155,8 @@ class Game_Info:
             sprite_info = {
                 'class_name': sprite.__class__.__name__,
                 'position': sprite.position,
-                'color': sprite.color
+                'color': sprite.color,
+                'rotation': sprite.rotation
             }
             self.moving_blocks_info.append(sprite_info)
         # ## Add necessary info about moving blocks to the object (adding stationary Group causes
@@ -199,13 +201,13 @@ class Cell_Sprite(pg.sprite.Sprite):
 # Abstract class laying groundwork for each type of block in the game
 class Block(pg.sprite.Sprite):
     # Initialize key properties used by this class and by child classes
-    def __init__(self, position, color):
+    def __init__(self, position, rotation, color):
         pg.sprite.Sprite.__init__(self)
         self.add(moving_blocks)
         self.color = color
         self.position = position
         self.fields = []
-        self.rotation = 0
+        self.rotation = rotation
         game_window = pg.Surface(screen.get_size())
         self.cell_width = game_window.get_width() / no_of_columns
         self.cell_height = game_window.get_height() / no_of_rows
@@ -304,8 +306,8 @@ class Block(pg.sprite.Sprite):
 
 # Class representing the square block. Child class of Block
 class Square_Block(Block):
-    def __init__(self, position, color):
-        super().__init__(position, color)
+    def __init__(self, position, rotation, color):
+        super().__init__(position, rotation, color)
         self.fields = self.calculate_fields(self.position.x, self.position.y, self.rotation)
         self.draw()
 
@@ -322,8 +324,8 @@ class Square_Block(Block):
 
 # Class representing the L block. Child class of Block
 class L_Block(Block):
-    def __init__(self, position, color):
-        super().__init__(position, color)
+    def __init__(self, position, rotation, color):
+        super().__init__(position, rotation, color)
         self.fields = self.calculate_fields(self.position.x, self.position.y, self.rotation)
         self.draw()
 
@@ -362,8 +364,8 @@ class L_Block(Block):
 
 # Class representing the mirrored L block. Child class of Block
 class L_Mirror_Block(Block):
-    def __init__(self, position, color):
-        super().__init__(position, color)
+    def __init__(self, position, rotation, color):
+        super().__init__(position, rotation, color)
         self.fields = self.calculate_fields(self.position.x, self.position.y, self.rotation)
         self.draw()
 
@@ -401,8 +403,8 @@ class L_Mirror_Block(Block):
 
 # Class representing the vertical line block. Child class of Block
 class Line_Block(Block):
-    def __init__(self, position, color):
-        super().__init__(position, color)
+    def __init__(self, position, rotation, color):
+        super().__init__(position, rotation, color)
         self.fields = self.calculate_fields(self.position.x, self.position.y, self.rotation)
         self.draw()
 
@@ -425,8 +427,8 @@ class Line_Block(Block):
 
 # Class representing the diagonal block. Child class of Block
 class Diagonal_Block(Block):
-    def __init__(self, position, color):
-        super().__init__(position, color)
+    def __init__(self, position, rotation, color):
+        super().__init__(position, rotation, color)
         self.fields = self.calculate_fields(self.position.x, self.position.y, self.rotation)
         self.draw()
 
@@ -451,8 +453,8 @@ class Diagonal_Block(Block):
 
 # Class representing the mirrored diagonal block. Child class of Block
 class Diagonal_Mirror_Block(Block):
-    def __init__(self, position, color):
-        super().__init__(position, color)
+    def __init__(self, position, rotation, color):
+        super().__init__(position, rotation, color)
         self.fields = self.calculate_fields(self.position.x, self.position.y, self.rotation)
         self.draw()
 
@@ -477,8 +479,8 @@ class Diagonal_Mirror_Block(Block):
 
 # Class representing the spaceship block. Child class of Block
 class Spaceship_Block(Block):
-    def __init__(self, position, color):
-        super().__init__(position, color)
+    def __init__(self, position, rotation, color):
+        super().__init__(position, rotation, color)
         self.fields = self.calculate_fields(self.position.x, self.position.y, self.rotation)
         self.draw()
 
@@ -521,11 +523,17 @@ def new_block(**kwargs):
     specified_type = kwargs.get('type')
     specified_color = kwargs.get('color')
     specified_position = kwargs.get('position')
+    specified_rotation = kwargs.get('rotation')
     # ## If position was specified in kwargs, use it. If not, use default position
     if specified_position is not None:
         position = specified_position
     else:
         position = Position(0, 6)
+    # ## If rotation was specified in kwargs, use it. If not, use default value
+    if specified_rotation is not None:
+        rotation = specified_rotation
+    else:
+        rotation = 0
     # ## If color was specified in kwargs, use it. If not, choose a random color
     if specified_color is not None:
         color = specified_color
@@ -541,33 +549,33 @@ def new_block(**kwargs):
     # ## If type was specified in kwargs, use it. If not, choose a random block type
     if specified_type is not None:
         if specified_type == 'Square_Block':
-            block = Square_Block(position, color)
+            block = Square_Block(position, rotation, color)
         elif specified_type == 'L_Block':
-            block = L_Block(position, color)
+            block = L_Block(position, rotation, color)
         elif specified_type == 'Line_Block':
-            block = Line_Block(position, color)
+            block = Line_Block(position, rotation, color)
         elif specified_type == 'Diagonal_Block':
-            block = Diagonal_Block(position, color)
+            block = Diagonal_Block(position, rotation, color)
         elif specified_type == 'Spaceship_Block':
-            block = Spaceship_Block(position, color)
+            block = Spaceship_Block(position, rotation, color)
         elif specified_type == 'Diagonal_Mirror_Block':
-            block = Diagonal_Mirror_Block(position, color)
+            block = Diagonal_Mirror_Block(position, rotation, color)
         elif specified_type == 'L_Mirror_Block':
-            block = L_Mirror_Block(position, color)
+            block = L_Mirror_Block(position, rotation, color)
     else:
         rand_int = random.randrange(0, 6)
         if rand_int == 0:
-            block = Square_Block(position, color)
+            block = Square_Block(position, rotation, color)
         elif rand_int == 1:
-            block = L_Block(position, color)
+            block = L_Block(position, rotation, color)
         elif rand_int == 2:
-            block = Line_Block(position, color)
+            block = Line_Block(position, rotation, color)
         elif rand_int == 3:
-            block = Diagonal_Block(position, color)
+            block = Diagonal_Block(position, rotation, color)
         elif rand_int == 4:
-            block = Spaceship_Block(position, color)
+            block = Spaceship_Block(position, rotation, color)
         elif rand_int == 5:
-            block = Diagonal_Mirror_Block(position, color)
+            block = Diagonal_Mirror_Block(position, rotation, color)
         elif rand_int == 6:
             block = L_Mirror_Block(position, color)
     # ## Check if block's initial fields are available. If not, quit the game
