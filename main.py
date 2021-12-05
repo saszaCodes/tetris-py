@@ -125,7 +125,7 @@ def load_game():
         game_info = json.loads(game_info_serialized)
     # ## Clear current game state
     game_state.clear_all_rows()
-    print(game_state.state)
+    print_game_state_pretty()
     # ## Clear all currently existing sprites and populate sprite groups using loaded game info. This has to be done
     # ## before any methods updating the screen or game state are called to make sure any checks running when new blocks
     # ## are added don't conflict with the current game state
@@ -145,11 +145,12 @@ def load_game():
     moving_block_color = moving_block_info['color']
     new_block(type=moving_block_type, position=moving_block_position, rotation=moving_block_rotation, color=moving_block_color)
     # ## Substitute current score with the loaded score
-    score = game_info['score_info']
+    game_state.score = game_info['score_info']
     # ## Substitute current game state with the loaded game state. This has to be done after any methods
     # ## updating the screen or game state are called to make sure any checks running when new blocks
     # ## are added don't conflict with the new game state
     game_state.state = game_info['game_state_info']
+    print_game_state_pretty()
 
 
 # Helper class used to extract key information about the game state for saving or sending over the internet
@@ -617,6 +618,8 @@ def check_and_clear():
                     sprite.remove(stationary_blocks)
                 if sprite.position.x < index:
                     pg.Rect.move_ip(sprite.rect, 0, cell_height)
+                    sprite.position = Position(sprite.position.x + 1, sprite.position.y)
+
     # ## Update the score and print it to the console
     # ma zwracać liczbę punktów i w miejscu wywołania dorzucać do score
     game_state.score += default_settings.points_for_rows[cleared_rows]
