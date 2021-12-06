@@ -71,8 +71,8 @@ class Default_Settings:
             4: 1200
         }
         # ## Dimenstions of the game's grid
-        self.no_of_rows = 12
-        self.no_of_columns = 16
+        self.no_of_rows = 18
+        self.no_of_columns = 12
         # ## Number of next blocks to show
         self.no_of_next_blocks = 3
 
@@ -641,34 +641,37 @@ def check_and_clear():
 class Game_Display:
     def __init__(self):
         # ## Create main display
-        self.display = pg.display.set_mode((940, 480))
+        self.display = pg.display.set_mode((600, 600))
         # ## Create game area and its background
-        self.game_area = pg.Surface((640, 480))
+        # ## Background ratio - 2:3
+        self.game_area = pg.Surface((380, 570))
         self.game_area = self.game_area.convert()
         self.game_area.fill((255, 255, 255))
-        self.game_area_background = pg.Surface((640, 480))
+        self.game_area_background = pg.Surface(self.game_area.get_size())
         self.game_area_background = self.game_area_background.convert()
         self.game_area_background.fill((255, 255, 255))
         # ## Calculate cell dimensions
         self.game_cell_height = self.game_area.get_height() / default_settings.no_of_rows
         self.game_cell_width = self.game_area.get_width() / default_settings.no_of_columns
-        # ## Create UI area
-        self.ui_area = pg.Surface((300, 480))
+        # ## Create UI area and its background
+        self.ui_area = pg.Surface((600, 600))
         self.ui_area = self.ui_area.convert()
         self.ui_area.fill((0, 0, 0))
-        # ## Blit game area's background to the game area, then blit game area and ui area to the main display
+        self.ui_area_background = pg.Surface(self.ui_area.get_size())
+        self.ui_area_background = self.ui_area_background.convert()
+        self.ui_area_background.fill((0, 0, 0))
+        # ## Blit game backgrounds to the areas, then blit game area and ui area to the main display
         self.game_area.blit(self.game_area_background, (0, 0))
-        self.display.blit(self.game_area, (0, 0))
-        self.display.blit(self.ui_area, (640, 0))
+        self.display.blit(self.ui_area, (0, 0))
+        self.display.blit(self.game_area, (10, 15))
         # ## Initialize sprite groups
         self.stationary_blocks = pg.sprite.Group()
         self.moving_blocks = pg.sprite.Group()
-        return
 
     # Blits all game areas to the main display and flips it
     def update_display(self):
-        self.display.blit(self.game_area, (0, 0))
-        self.display.blit(self.ui_area, (640, 0))
+        self.display.blit(self.ui_area, (0, 0))
+        self.display.blit(self.game_area, (10, 15))
         pg.display.flip()
 
     # Draws game sprites to the game area
@@ -679,6 +682,44 @@ class Game_Display:
         self.stationary_blocks.draw(self.game_area)
         self.moving_blocks.draw(self.game_area)
 
+    # Draws UI sprites to the UI area
+    def draw_ui_sprites(self):
+        # ## First, blit the background to draw over
+        self.ui_area.blit(self.ui_area_background, (0, 0))
+        # ## Write info in the UI area
+        my_font = pg.font.SysFont('Console', 25)
+        my_font_small = pg.font.SysFont('Console', 18)
+        text_antialiased = True
+        text_color = (255, 255, 255)
+        # ##
+        score_title = my_font.render('Wynik:', text_antialiased, text_color)
+        score_title_size = my_font.size('Wynik:')
+        # ##
+        score_value = my_font.render(f'{game_state.score}', text_antialiased, text_color)
+        score_value_size = my_font.size(f'{game_state.score}')
+        # ##
+        keys_title = my_font.render('Sterowanie:', text_antialiased, text_color)
+        key_1 = my_font_small.render('R - obróć klocek', text_antialiased, text_color)
+        # key_2 = my_font_small.render('strzałki - ruszaj klockiem', text_antialiased, text_color)
+        key_3 = my_font_small.render('S - zapisz grę', text_antialiased, text_color)
+        key_4 = my_font_small.render('L - ładuj grę', text_antialiased, text_color)
+        key_5 = my_font_small.render('P - zatrzymaj grę', text_antialiased, text_color)
+        keys_title_size = my_font.size('Sterowanie:')
+        key_1_size = my_font_small.size('R - obróć klocek')
+        # key_2_size = my_font_small.size('strzałki - ruszaj klockiem')
+        key_3_size = my_font_small.size('S - zapisz grę')
+        key_4_size = my_font_small.size('L - ładuj grę')
+        key_5_size = my_font_small.size('P - zatrzymaj grę')
+        self.ui_area.blit(score_title, (400 + (200 - score_title_size[0])/2, 20))
+        self.ui_area.blit(score_value, (400 + (200 - score_value_size[0])/2, 60))
+        self.ui_area.blit(keys_title, (400 + (200 - keys_title_size[0]) / 2, 100))
+        self.ui_area.blit(key_1, (400 + (200 - key_1_size[0]) / 2, 150))
+        # self.ui_area.blit(key_2, (400 + (200 - key_2_size[0]) / 2, 150))
+        self.ui_area.blit(key_3, (400 + (200 - key_3_size[0]) / 2, 180))
+        self.ui_area.blit(key_4, (400 + (200 - key_4_size[0]) / 2, 210))
+        self.ui_area.blit(key_5, (400 + (200 - key_5_size[0]) / 2, 240))
+
+    # Removes sprites from one row, updates position property of the sprites above and moves them down on the display
     def clear_row(self, x_position):
         for sprite in self.stationary_blocks.sprites():
             if sprite.position.x - x_position == 0.0:
@@ -762,4 +803,5 @@ while running:
         game_display.moving_blocks.update('d', 0)
     # ## Draw the sprites and update the display
     game_display.draw_game_sprites()
+    game_display.draw_ui_sprites()
     game_display.update_display()
