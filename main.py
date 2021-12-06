@@ -224,17 +224,20 @@ class Position:
 # Helper class for creating sprites representing single cells
 class Cell_Sprite(pg.sprite.Sprite):
     def __init__(self, position, color):
+        # ## Initialize the sprite
         pg.sprite.Sprite.__init__(self)
+        # ## Set position and color
         self.position = position
         self.color = color
-        game_window = pg.Surface(game_display.game_area.get_size())
-        self.cell_width = game_window.get_width() / default_settings.no_of_columns
-        self.cell_height = game_window.get_height() / default_settings.no_of_rows
+        # ## Load sprite from the filesystem to self.image and use it to define self.rect
         sprite_filename = default_settings.color_to_filename[color]
+        cell_height = game_display.game_cell_height
+        cell_width = game_display.game_cell_width
         self.image = pg.image.load(os.path.join(assets_dir, sprite_filename)).convert()
-        self.image = pg.transform.scale(self.image, (self.cell_width, self.cell_height))
+        self.image = pg.transform.scale(self.image, (cell_width, cell_height))
         self.rect = self.image.get_rect()
-        self.rect.topleft = (self.position.y * self.cell_width, self.position.x * self.cell_height)
+        self.rect.topleft = (self.position.y * cell_width, self.position.x * cell_height)
+        # ## Add the sprite to the stationary_blocks group
         self.add(game_display.stationary_blocks)
 
 
@@ -249,8 +252,9 @@ class Block(pg.sprite.Sprite):
         self.fields = []
         self.rotation = rotation
         game_window = pg.Surface(game_display.game_area.get_size())
-        self.cell_width = game_window.get_width() / default_settings.no_of_columns
-        self.cell_height = game_window.get_height() / default_settings.no_of_rows
+        # CZY TO POWINNO BYĆ ZDEFINIOWANE TUTAJ, CZY KAŻDORAZOWO ODWOŁANIE DO GAME_DISPLAY?
+        self.cell_width = game_display.game_cell_width
+        self.cell_height = game_display.game_cell_height
 
     # Create an image of the block sprite
     def draw(self):
@@ -610,9 +614,7 @@ def new_block(**kwargs):
 
 # Check if any row is filled. If it is, update the score, game state and sprites
 def check_and_clear():
-    # ## Get cell height and initialize variable keeping track of cleared rows
-    game_window = pg.Surface(game_display.game_area.get_size())
-    cell_height = game_window.get_height() / default_settings.no_of_rows
+    # ## Initialize variable keeping track of cleared rows
     cleared_rows = 0
     # ## For each row, calculate if it is full. If it is, remove the row from game state and from the screen, then
     # ## update all cells above the deleted row so they fall into emptied space both on screen and in game state
@@ -625,12 +627,7 @@ def check_and_clear():
         if row_full:
             cleared_rows += 1
             game_state.clear_row(index)
-            for sprite in game_display.stationary_blocks.sprites():
-                if sprite.position.x - index == 0.0:
-                    sprite.remove(game_display.stationary_blocks)
-                if sprite.position.x < index:
-                    pg.Rect.move_ip(sprite.rect, 0, cell_height)
-                    sprite.position = Position(sprite.position.x + 1, sprite.position.y)
+            game_display.clear_row(index)
 
     # ## Update the score and print it to the console
     # ma zwracać liczbę punktów i w miejscu wywołania dorzucać do score
@@ -652,6 +649,9 @@ class Game_Display:
         self.game_area_background = pg.Surface((640, 480))
         self.game_area_background = self.game_area_background.convert()
         self.game_area_background.fill((255, 255, 255))
+        # ## Calculate cell dimensions
+        self.game_cell_height = self.game_area.get_height() / default_settings.no_of_rows
+        self.game_cell_width = self.game_area.get_width() / default_settings.no_of_columns
         # ## Create UI area
         self.ui_area = pg.Surface((300, 480))
         self.ui_area = self.ui_area.convert()
@@ -667,21 +667,25 @@ class Game_Display:
 
     # Blits all game areas to the main display and flips it
     def update_display(self):
-        #
         self.display.blit(self.game_area, (0, 0))
         self.display.blit(self.ui_area, (640, 0))
         pg.display.flip()
 
     # Draws game sprites to the game area
     def draw_game_sprites(self):
-        # ## First, blit the background to draw over it
+        # ## First, blit the background to draw over
         self.game_area.blit(self.game_area_background, (0, 0))
         # ## Draw the sprites
         self.stationary_blocks.draw(self.game_area)
         self.moving_blocks.draw(self.game_area)
 
     def clear_row(self, x_position):
-        return
+        for sprite in self.stationary_blocks.sprites():
+            if sprite.position.x - x_position == 0.0:
+                sprite.remove(self.stationary_blocks)
+            if sprite.position.x < x_position:
+                pg.Rect.move_ip(sprite.rect, 0, self.game_cell_height)
+                sprite.position = Position(sprite.position.x + 1, sprite.position.y)
 
     def clear_all_rows(self):
         return
