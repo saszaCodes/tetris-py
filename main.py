@@ -643,7 +643,7 @@ def check_and_clear():
 class Game_Display:
     def __init__(self):
         # ## Create main display
-        self.display = pg.display.set_mode((600, 600))
+        self.display = pg.display.set_mode((650, 600))
         # ## Create game area and its background
         # ## Background ratio - 2:3
         self.game_area = pg.Surface((400, 600))
@@ -656,18 +656,18 @@ class Game_Display:
         self.game_cell_height = self.game_area.get_height() / default_settings.no_of_rows
         self.game_cell_width = self.game_area.get_width() / default_settings.no_of_columns
         # ## Create UI area and its background
-        self.ui_area = pg.Surface((200, 600))
+        self.ui_area = pg.Surface((250, 600))
         self.ui_area = self.ui_area.convert()
         self.ui_area.fill((0, 0, 0))
         self.ui_area_background = pg.Surface(self.ui_area.get_size())
         self.ui_area_background = self.ui_area_background.convert()
         self.ui_area_background.fill((0, 0, 0))
         # ## Create main menu and its background
-        self.main_menu = pg.Surface((600, 600))
+        self.main_menu = pg.Surface((650, 600))
         self.main_menu = self.main_menu.convert()
         self.main_menu.fill((0, 0, 0))
         # ## Create endgame screen and its background
-        self.end_game_menu = pg.Surface((600, 600))
+        self.end_game_menu = pg.Surface((650, 600))
         self.end_game_menu = self.main_menu.convert()
         self.end_game_menu.fill((0, 0, 0))
         # ## Initialize sprite groups
@@ -686,9 +686,9 @@ class Game_Display:
         sub_text_1_size = my_font_small.size('Wciśnij \'s\' by rozpocząć nową grę')
         sub_text_2 = my_font_small.render('Wciśnij Esc by kontynuować grę', text_antialiased, text_color)
         sub_text_2_size = my_font_small.size('Wciśnij Esc by kontynuować grę')
-        self.main_menu.blit(main_text, ((600 - main_text_size[0]) / 2, 200))
-        self.main_menu.blit(sub_text_1, ((600 - sub_text_1_size[0]) / 2, 300))
-        self.main_menu.blit(sub_text_2, ((600 - sub_text_2_size[0]) / 2, 350))
+        self.main_menu.blit(main_text, ((650 - main_text_size[0]) / 2, 200))
+        self.main_menu.blit(sub_text_1, ((650 - sub_text_1_size[0]) / 2, 300))
+        self.main_menu.blit(sub_text_2, ((650 - sub_text_2_size[0]) / 2, 350))
         self.display.blit(self.main_menu, (0, 0))
         pg.display.flip()
 
@@ -702,8 +702,8 @@ class Game_Display:
         main_text_size = my_font.size(f'Zdobyłxś {game_state.score} pkt')
         sub_text = my_font_small.render('Wciśnij Esc by wrócić do menu głównego', text_antialiased, text_color)
         sub_text_size = my_font_small.size('Wciśnij Esc by wrócić do menu głównego')
-        self.end_game_menu.blit(main_text, ((600 - main_text_size[0]) / 2, 200))
-        self.end_game_menu.blit(sub_text, ((600 - sub_text_size[0]) / 2, 300))
+        self.end_game_menu.blit(main_text, ((650 - main_text_size[0]) / 2, 200))
+        self.end_game_menu.blit(sub_text, ((650 - sub_text_size[0]) / 2, 300))
         self.display.blit(self.end_game_menu, (0, 0))
         pg.display.flip()
 
@@ -749,14 +749,14 @@ class Game_Display:
         key_3_size = my_font_small.size('S - zapisz grę')
         key_4_size = my_font_small.size('L - ładuj grę')
         key_5_size = my_font_small.size('P - zatrzymaj grę')
-        self.ui_area.blit(score_title, ((200 - score_title_size[0])/2, 120))
-        self.ui_area.blit(score_value, ((200 - score_value_size[0])/2, 160))
-        self.ui_area.blit(keys_title, ((200 - keys_title_size[0]) / 2, 300))
-        self.ui_area.blit(key_1, ((200 - key_1_size[0]) / 2, 330))
+        self.ui_area.blit(score_title, ((250 - score_title_size[0])/2, 120))
+        self.ui_area.blit(score_value, ((250 - score_value_size[0])/2, 160))
+        self.ui_area.blit(keys_title, ((250 - keys_title_size[0]) / 2, 300))
+        self.ui_area.blit(key_1, ((250 - key_1_size[0]) / 2, 330))
         # self.ui_area.blit(key_2, (400 + (200 - key_2_size[0]) / 2, 150))
-        self.ui_area.blit(key_3, ((200 - key_3_size[0]) / 2, 360))
-        self.ui_area.blit(key_4, ((200 - key_4_size[0]) / 2, 390))
-        self.ui_area.blit(key_5, ((200 - key_5_size[0]) / 2, 420))
+        self.ui_area.blit(key_3, ((250 - key_3_size[0]) / 2, 360))
+        self.ui_area.blit(key_4, ((250 - key_4_size[0]) / 2, 390))
+        self.ui_area.blit(key_5, ((250 - key_5_size[0]) / 2, 420))
 
     # Removes sprites from one row, updates position property of the sprites above and moves them down on the display
     def clear_row(self, x_position):
@@ -781,10 +781,25 @@ class Game_Sounds:
         self.row_cleared = pg.mixer.Sound(os.path.join(sounds_dir, 'row_cleared.wav'))
 
     def play_main_theme(self):
-        pg.mixer.Sound.play(self.main_theme)
+        self.main_theme.play()
+
+    def stop_main_theme(self):
+        self.main_theme.stop()
+
+    def play_background_music(self):
+        return
+
+    def stop_background_music(self):
+        return
+
+    def play_endgame_music(self):
+        return
+
+    def stop_endgame_music(self):
+        return
 
     def play_row_cleared(self):
-        pg.mixer.Sound.play(self.row_cleared)
+        self.row_cleared.play()
 
 
 class Game_Loops:
@@ -799,6 +814,7 @@ class Game_Loops:
         self.leave_game = pg.QUIT
 
     def main_menu(self):
+        game_sounds.play_main_theme()
         in_menu = True
         while in_menu and self.game_running:
             self.frame_clock.tick(30)
@@ -809,9 +825,11 @@ class Game_Loops:
                     in_menu = False
                 # ## If Esc is clicked, go back to the game
                 elif event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
+                    game_sounds.stop_main_theme()
                     self._game()
                 # ## If s is clicked, clear current game and start a new one
                 elif event.type == pg.KEYDOWN and event.key == pg.K_s:
+                    game_sounds.stop_main_theme()
                     self.game_finished = False
                     game_state.clear_all_rows()
                     game_state.score = 0
@@ -984,7 +1002,5 @@ game_sounds = Game_Sounds()
 game_loops = Game_Loops()
 # Create the first block
 new_block()
-# Play the main theme
-game_sounds.play_main_theme()
 # Initialize the game
 game_loops.main_menu()
