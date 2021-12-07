@@ -28,6 +28,8 @@ import datetime
 #
 main_dir = os.path.split(os.path.abspath(__file__))[0]
 assets_dir = os.path.join(main_dir, 'assets')
+sprites_dir = os.path.join(assets_dir, 'sprites')
+sounds_dir = os.path.join(assets_dir, 'sounds')
 # data_dir = os.path.join(main_dir, 'data')
 
 # Initialize random module
@@ -61,7 +63,7 @@ class Default_Settings:
         }
         # ## Default rotation, position of a new block
         self.block_rotation = 0
-        self.block_position = Position(0, 6)
+        self.block_position = Position(0, 5)
         # ## Scoring system
         self.points_for_rows = {
             0: 0,
@@ -233,7 +235,7 @@ class Cell_Sprite(pg.sprite.Sprite):
         sprite_filename = default_settings.color_to_filename[color]
         cell_height = game_display.game_cell_height
         cell_width = game_display.game_cell_width
-        self.image = pg.image.load(os.path.join(assets_dir, sprite_filename)).convert()
+        self.image = pg.image.load(os.path.join(sprites_dir, sprite_filename)).convert()
         self.image = pg.transform.scale(self.image, (cell_width, cell_height))
         self.rect = self.image.get_rect()
         self.rect.topleft = (self.position.y * cell_width, self.position.x * cell_height)
@@ -267,7 +269,7 @@ class Block(pg.sprite.Sprite):
         # ## Draw each individual cell onto the canvas
         for field in self.fields:
             cell_sprite_filename = default_settings.color_to_filename[self.color]
-            cell_image = pg.image.load(os.path.join(assets_dir, cell_sprite_filename)).convert()
+            cell_image = pg.image.load(os.path.join(sprites_dir, cell_sprite_filename)).convert()
             cell_image = pg.transform.scale(cell_image, (self.cell_width, self.cell_height))
             dest = (
                 (field.y - self.position.y) * self.cell_width,
@@ -635,6 +637,8 @@ def check_and_clear():
     if cleared_rows > 0:
         print(cleared_rows)
         print(f'score: {game_state.score}')
+        # ## Play the row_cleared sound
+        game_sounds.play_row_cleared()
 
 
 # Class with methods and properties representing current display
@@ -644,7 +648,7 @@ class Game_Display:
         self.display = pg.display.set_mode((600, 600))
         # ## Create game area and its background
         # ## Background ratio - 2:3
-        self.game_area = pg.Surface((380, 570))
+        self.game_area = pg.Surface((400, 600))
         self.game_area = self.game_area.convert()
         self.game_area.fill((255, 255, 255))
         self.game_area_background = pg.Surface(self.game_area.get_size())
@@ -654,7 +658,7 @@ class Game_Display:
         self.game_cell_height = self.game_area.get_height() / default_settings.no_of_rows
         self.game_cell_width = self.game_area.get_width() / default_settings.no_of_columns
         # ## Create UI area and its background
-        self.ui_area = pg.Surface((600, 600))
+        self.ui_area = pg.Surface((200, 600))
         self.ui_area = self.ui_area.convert()
         self.ui_area.fill((0, 0, 0))
         self.ui_area_background = pg.Surface(self.ui_area.get_size())
@@ -662,16 +666,16 @@ class Game_Display:
         self.ui_area_background.fill((0, 0, 0))
         # ## Blit game backgrounds to the areas, then blit game area and ui area to the main display
         self.game_area.blit(self.game_area_background, (0, 0))
-        self.display.blit(self.ui_area, (0, 0))
-        self.display.blit(self.game_area, (10, 15))
+        self.display.blit(self.ui_area, (400, 0))
+        self.display.blit(self.game_area, (0, 0))
         # ## Initialize sprite groups
         self.stationary_blocks = pg.sprite.Group()
         self.moving_blocks = pg.sprite.Group()
 
     # Blits all game areas to the main display and flips it
     def update_display(self):
-        self.display.blit(self.ui_area, (0, 0))
-        self.display.blit(self.game_area, (10, 15))
+        self.display.blit(self.ui_area, (400, 0))
+        self.display.blit(self.game_area, (0, 0))
         pg.display.flip()
 
     # Draws game sprites to the game area
@@ -710,14 +714,14 @@ class Game_Display:
         key_3_size = my_font_small.size('S - zapisz grę')
         key_4_size = my_font_small.size('L - ładuj grę')
         key_5_size = my_font_small.size('P - zatrzymaj grę')
-        self.ui_area.blit(score_title, (400 + (200 - score_title_size[0])/2, 20))
-        self.ui_area.blit(score_value, (400 + (200 - score_value_size[0])/2, 60))
-        self.ui_area.blit(keys_title, (400 + (200 - keys_title_size[0]) / 2, 100))
-        self.ui_area.blit(key_1, (400 + (200 - key_1_size[0]) / 2, 150))
+        self.ui_area.blit(score_title, ((200 - score_title_size[0])/2, 120))
+        self.ui_area.blit(score_value, ((200 - score_value_size[0])/2, 160))
+        self.ui_area.blit(keys_title, ((200 - keys_title_size[0]) / 2, 300))
+        self.ui_area.blit(key_1, ((200 - key_1_size[0]) / 2, 330))
         # self.ui_area.blit(key_2, (400 + (200 - key_2_size[0]) / 2, 150))
-        self.ui_area.blit(key_3, (400 + (200 - key_3_size[0]) / 2, 180))
-        self.ui_area.blit(key_4, (400 + (200 - key_4_size[0]) / 2, 210))
-        self.ui_area.blit(key_5, (400 + (200 - key_5_size[0]) / 2, 240))
+        self.ui_area.blit(key_3, ((200 - key_3_size[0]) / 2, 360))
+        self.ui_area.blit(key_4, ((200 - key_4_size[0]) / 2, 390))
+        self.ui_area.blit(key_5, ((200 - key_5_size[0]) / 2, 420))
 
     # Removes sprites from one row, updates position property of the sprites above and moves them down on the display
     def clear_row(self, x_position):
@@ -732,6 +736,46 @@ class Game_Display:
         return
 
 
+# Class with methods and properties controlling game music and sounds
+class Game_Sounds:
+    # CZY TUTAJ W INIT NALEŻY ZAINICJOWAĆ MODUŁ PYGAME? TO SAMO PYTANIE W GAME_DISPLAY
+    def __init__(self):
+        self.main_theme = pg.mixer.Sound(os.path.join(sounds_dir, 'main_theme.mp3'))
+        self.row_cleared = pg.mixer.Sound(os.path.join(sounds_dir, 'row_cleared.wav'))
+
+    def play_main_theme(self):
+        pg.mixer.Sound.play(self.main_theme)
+
+    def play_row_cleared(self):
+        pg.mixer.Sound.play(self.row_cleared)
+
+
+# Pauses the game until player presses the unpause button
+def pause_game():
+    paused = True
+    while paused:
+        # ## When paused, tick the frame_clock to be able to react when user clicks the pause button again,
+        # ## but don't increase the frame_counter. It should be increased only when the game is actually running
+        frame_clock.tick(30)
+        for event in pg.event.get():
+            # ## Key input for unpausing
+            if event.type == pg.KEYDOWN and event.key == pg.K_p:
+                paused = False
+            # ## Key inputs quitting the game
+            elif event.type == pg.QUIT:
+                running = False
+                paused = False
+            elif event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
+                running = False
+                paused = False
+            # ## Key inputs saving and loading the game
+            elif event.type == pg.KEYDOWN and event.key == pg.K_s:
+                save_game()
+            elif event.type == pg.KEYDOWN and event.key == pg.K_l:
+                load_game()
+                paused = False
+
+
 # Initialize pyGame module and game clock
 pg.init()
 frame_clock = pg.time.Clock()
@@ -740,10 +784,13 @@ frame_counter = 0
 default_settings = Default_Settings()
 game_state = Game_State()
 game_display = Game_Display()
+game_sounds = Game_Sounds()
 # Create the first block
 new_block()
 # Initialize game loop
 running = True
+# Play the main theme
+game_sounds.play_main_theme()
 # Game loop
 while running:
     frame_clock.tick(30)
@@ -775,28 +822,7 @@ while running:
             game_display.moving_blocks.update(direction, rotation)
         # ## Key input for pausing the game
         elif event.type == pg.KEYDOWN and event.key == pg.K_p:
-            paused = True
-            while paused:
-                # ## When paused, tick the frame_clock to be able to react when user clicks the pause button again,
-                # ## but don't increase the frame_counter. It should be increased only when the game is actually running
-                frame_clock.tick(30)
-                for event in pg.event.get():
-                    # ## Key input for unpausing
-                    if event.type == pg.KEYDOWN and event.key == pg.K_p:
-                        paused = False
-                    # ## Key inputs quitting the game
-                    elif event.type == pg.QUIT:
-                        running = False
-                        paused = False
-                    elif event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
-                        running = False
-                        paused = False
-                    # ## Key inputs saving and loading the game
-                    elif event.type == pg.KEYDOWN and event.key == pg.K_s:
-                        save_game()
-                    elif event.type == pg.KEYDOWN and event.key == pg.K_l:
-                        load_game()
-                        paused = False
+            pause_game()
     # ## Every 15 ticks move currently moving block down
     if frame_counter >= 15:
         frame_counter = 0
