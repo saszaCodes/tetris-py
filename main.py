@@ -155,8 +155,7 @@ def load_game():
     # ## Clear all currently existing sprites and populate sprite groups using loaded game info. This has to be done
     # ## before any methods updating the screen or game state are called to make sure any checks running when new blocks
     # ## are added don't conflict with the current game state
-    game_display.moving_blocks.empty()
-    game_display.stationary_blocks.empty()
+    game_display.clear_all_rows()
     # ## Get position and color of each stationary sprite from loaded data and create a new cell sprite using it
     stationary_blocks_info = game_info['stationary_blocks_info']
     for block_info in stationary_blocks_info:
@@ -606,12 +605,11 @@ def new_block(**kwargs):
         # ## Get the block constructor function and run it with appropriate arguments
         block_constructor = default_settings.block_name_to_constructor[type]
         block = block_constructor(position, rotation, color)
-    # ## Check if block's initial fields are available. If not, quit the game
+    # ## Check if block's initial fields are available. If not, end the game
     for field in block.fields:
         if game_state.state[field.x][field.y]:
-            pg.display.quit()
-            # sprawdzić czy return potrzebny
-            return
+            # JAK ZROBIĆ ŻEBY NIE SIĘGAĆ DO TEGO OBIEKTU? ZWRACANIE RZECZY PRZEZ FUNKCJE?
+            game_loops.game_finished = True
 
 
 # Check if any row is filled. If it is, update the score, game state and sprites
@@ -664,16 +662,53 @@ class Game_Display:
         self.ui_area_background = pg.Surface(self.ui_area.get_size())
         self.ui_area_background = self.ui_area_background.convert()
         self.ui_area_background.fill((0, 0, 0))
-        # ## Blit game backgrounds to the areas, then blit game area and ui area to the main display
-        self.game_area.blit(self.game_area_background, (0, 0))
-        self.display.blit(self.ui_area, (400, 0))
-        self.display.blit(self.game_area, (0, 0))
+        # ## Create main menu and its background
+        self.main_menu = pg.Surface((600, 600))
+        self.main_menu = self.main_menu.convert()
+        self.main_menu.fill((0, 0, 0))
+        # ## Create endgame screen and its background
+        self.end_game_menu = pg.Surface((600, 600))
+        self.end_game_menu = self.main_menu.convert()
+        self.end_game_menu.fill((0, 0, 0))
         # ## Initialize sprite groups
         self.stationary_blocks = pg.sprite.Group()
         self.moving_blocks = pg.sprite.Group()
 
+    # Draws the main menu
+    def draw_main_menu(self):
+        text_antialiased = True
+        text_color = (255, 255, 255)
+        my_font = pg.font.SysFont('Console', 40)
+        my_font_small = pg.font.SysFont('Console', 25)
+        main_text = my_font.render('Tetris', text_antialiased, text_color)
+        main_text_size = my_font.size('Tetris')
+        sub_text_1 = my_font_small.render('Wciśnij \'s\' by rozpocząć nową grę', text_antialiased, text_color)
+        sub_text_1_size = my_font_small.size('Wciśnij \'s\' by rozpocząć nową grę')
+        sub_text_2 = my_font_small.render('Wciśnij Esc by kontynuować grę', text_antialiased, text_color)
+        sub_text_2_size = my_font_small.size('Wciśnij Esc by kontynuować grę')
+        self.main_menu.blit(main_text, ((600 - main_text_size[0]) / 2, 200))
+        self.main_menu.blit(sub_text_1, ((600 - sub_text_1_size[0]) / 2, 300))
+        self.main_menu.blit(sub_text_2, ((600 - sub_text_2_size[0]) / 2, 350))
+        self.display.blit(self.main_menu, (0, 0))
+        pg.display.flip()
+
+    # Draw the endgame screen
+    def draw_end_game_menu(self):
+        text_antialiased = True
+        text_color = (255, 255, 255)
+        my_font = pg.font.SysFont('Console', 40)
+        my_font_small = pg.font.SysFont('Console', 25)
+        main_text = my_font.render(f'Zdobyłxś {game_state.score} pkt', text_antialiased, text_color)
+        main_text_size = my_font.size(f'Zdobyłxś {game_state.score} pkt')
+        sub_text = my_font_small.render('Wciśnij Esc by wrócić do menu głównego', text_antialiased, text_color)
+        sub_text_size = my_font_small.size('Wciśnij Esc by wrócić do menu głównego')
+        self.end_game_menu.blit(main_text, ((600 - main_text_size[0]) / 2, 200))
+        self.end_game_menu.blit(sub_text, ((600 - sub_text_size[0]) / 2, 300))
+        self.display.blit(self.end_game_menu, (0, 0))
+        pg.display.flip()
+
     # Blits all game areas to the main display and flips it
-    def update_display(self):
+    def update_game_display(self):
         self.display.blit(self.ui_area, (400, 0))
         self.display.blit(self.game_area, (0, 0))
         pg.display.flip()
@@ -732,8 +767,10 @@ class Game_Display:
                 pg.Rect.move_ip(sprite.rect, 0, self.game_cell_height)
                 sprite.position = Position(sprite.position.x + 1, sprite.position.y)
 
+    # Removes all existing sprites from respective sprite groups
     def clear_all_rows(self):
-        return
+        self.moving_blocks.empty()
+        self.stationary_blocks.empty()
 
 
 # Class with methods and properties controlling game music and sounds
@@ -750,87 +787,190 @@ class Game_Sounds:
         pg.mixer.Sound.play(self.row_cleared)
 
 
+class Game_Loops:
+    def __init__(self):
+        # TO RACZEJ JEDNAK NIE TUTAJ
+        pg.init()
+        self.game_running = True
+        self.game_finished = False
+        self.frame_clock = pg.time.Clock()
+        self.frame_counter = 0
+        # Key game controls, used by multiple methods
+        self.leave_game = pg.QUIT
+
+    def main_menu(self):
+        in_menu = True
+        while in_menu and self.game_running:
+            self.frame_clock.tick(30)
+            for event in pg.event.get():
+                # ## Key inputs quitting the game
+                if event.type == self.leave_game:
+                    self.game_running = False
+                    in_menu = False
+                # ## If Esc is clicked, go back to the game
+                elif event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
+                    self._game()
+                # ## If s is clicked, clear current game and start a new one
+                elif event.type == pg.KEYDOWN and event.key == pg.K_s:
+                    self.game_finished = False
+                    game_state.clear_all_rows()
+                    game_state.score = 0
+                    game_display.clear_all_rows()
+                    game_display.moving_blocks.empty()
+                    new_block()
+                    self._game()
+            game_display.draw_main_menu()
+
+    def _game(self):
+        playing = True
+        while playing and self.game_running:
+            self.frame_clock.tick(30)
+            self.frame_counter += 1
+            # ## Listen for key inputs and kick off processes creating the expected output
+            for event in pg.event.get():
+                # ## Key inputs quitting the game
+                if event.type == self.leave_game:
+                    self.game_running = False
+                    playing = False
+                elif event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
+                    playing = False
+                # ## Key inputs saving and loading the game
+                elif event.type == pg.KEYDOWN and event.key == pg.K_s:
+                    save_game()
+                elif event.type == pg.KEYDOWN and event.key == pg.K_l:
+                    load_game()
+                # ## Key inputs controlling currently moving block's movement
+                elif event.type == pg.KEYDOWN and event.key in (pg.K_RIGHT, pg.K_LEFT, pg.K_DOWN, pg.K_r):
+                    direction = ''
+                    rotation = 0
+                    if event.key == pg.K_RIGHT:
+                        direction = 'r'
+                    if event.key == pg.K_LEFT:
+                        direction = 'l'
+                    if event.key == pg.K_DOWN:
+                        direction = 'd'
+                    if event.key == pg.K_r:
+                        rotation = 90
+                    game_display.moving_blocks.update(direction, rotation)
+            # ## Every 15 ticks move currently moving block down
+            if self.frame_counter >= 15:
+                self.frame_counter = 0
+                game_display.moving_blocks.update('d', 0)
+                if self.game_finished:
+                    playing = False
+                    self._end_game()
+            # ## Draw the sprites and update the display
+            game_display.draw_game_sprites()
+            game_display.draw_ui_sprites()
+            game_display.update_game_display()
+
+    def _end_game(self):
+        in_end_game = True
+        while in_end_game and self.game_running:
+            self.frame_clock.tick(30)
+            for event in pg.event.get():
+                # ## Key inputs quitting the game
+                if event.type == self.leave_game:
+                    self.game_running = False
+                    in_end_game = False
+                elif event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
+                    in_end_game = False
+                elif event.type == pg.KEYDOWN and event.key == pg.K_s:
+                    self._game()
+            game_display.draw_end_game_menu()
+
 # Pauses the game until player presses the unpause button
-def pause_game():
-    paused = True
-    while paused:
-        # ## When paused, tick the frame_clock to be able to react when user clicks the pause button again,
-        # ## but don't increase the frame_counter. It should be increased only when the game is actually running
-        frame_clock.tick(30)
-        for event in pg.event.get():
-            # ## Key input for unpausing
-            if event.type == pg.KEYDOWN and event.key == pg.K_p:
-                paused = False
-            # ## Key inputs quitting the game
-            elif event.type == pg.QUIT:
-                running = False
-                paused = False
-            elif event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
-                running = False
-                paused = False
-            # ## Key inputs saving and loading the game
-            elif event.type == pg.KEYDOWN and event.key == pg.K_s:
-                save_game()
-            elif event.type == pg.KEYDOWN and event.key == pg.K_l:
-                load_game()
-                paused = False
+# def pause_game():
+#     paused = True
+#     while paused:
+#         # ## When paused, tick the frame_clock to be able to react when user clicks the pause button again,
+#         # ## but don't increase the frame_counter. It should be increased only when the game is actually running
+#         frame_clock.tick(30)
+#         for event in pg.event.get():
+#             # ## Key input for unpausing
+#             if event.type == pg.KEYDOWN and event.key == pg.K_p:
+#                 paused = False
+#             # ## Key inputs quitting the game
+#             elif event.type == pg.QUIT:
+#                 running = False
+#                 paused = False
+#             elif event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
+#                 running = False
+#                 paused = False
+#             # ## Key inputs saving and loading the game
+#             elif event.type == pg.KEYDOWN and event.key == pg.K_s:
+#                 save_game()
+#             elif event.type == pg.KEYDOWN and event.key == pg.K_l:
+#                 load_game()
+#                 paused = False
 
 
 # Starts the game
-def play_game():
-    playing = True
-    # ## frame_counter should be declared outside of the function to make sure that pausing the game won't influence it
-    # CZY TO JEST DOBRZE??? (GLOBAL)
-    global frame_counter
-    while playing:
-        frame_clock.tick(30)
-        frame_counter += 1
-        # ## Listen for key inputs and kick off processes creating the expected output
-        for event in pg.event.get():
-            # ## Key inputs quitting the game
-            if event.type == pg.QUIT:
-                playing = False
-            elif event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
-                playing = False
-            # ## Key inputs saving and loading the game
-            elif event.type == pg.KEYDOWN and event.key == pg.K_s:
-                save_game()
-            elif event.type == pg.KEYDOWN and event.key == pg.K_l:
-                load_game()
-            # ## Key inputs controlling currently moving block's movement
-            elif event.type == pg.KEYDOWN and event.key in (pg.K_RIGHT, pg.K_LEFT, pg.K_DOWN, pg.K_r):
-                direction = ''
-                rotation = 0
-                if event.key == pg.K_RIGHT:
-                    direction = 'r'
-                if event.key == pg.K_LEFT:
-                    direction = 'l'
-                if event.key == pg.K_DOWN:
-                    direction = 'd'
-                if event.key == pg.K_r:
-                    rotation = 90
-                game_display.moving_blocks.update(direction, rotation)
-            # ## Key input for pausing the game
-            elif event.type == pg.KEYDOWN and event.key == pg.K_p:
-                pause_game()
-        # ## Every 15 ticks move currently moving block down
-        if frame_counter >= 15:
-            frame_counter = 0
-            game_display.moving_blocks.update('d', 0)
-        # ## Draw the sprites and update the display
-        game_display.draw_game_sprites()
-        game_display.draw_ui_sprites()
-        game_display.update_display()
+# def play_game():
+    # playing = True
+    # # ## frame_counter should be declared outside of the function to make sure that pausing the game won't influence it
+    # # CZY TO JEST DOBRZE??? (GLOBAL)
+    # global frame_counter
+    # while playing:
+    #     frame_clock.tick(30)
+    #     frame_counter += 1
+    #     # ## Listen for key inputs and kick off processes creating the expected output
+    #     for event in pg.event.get():
+    #         # ## Key inputs quitting the game
+    #         if event.type == pg.QUIT:
+    #             playing = False
+    #         elif event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
+    #             playing = False
+    #         # ## Key inputs saving and loading the game
+    #         elif event.type == pg.KEYDOWN and event.key == pg.K_s:
+    #             save_game()
+    #         elif event.type == pg.KEYDOWN and event.key == pg.K_l:
+    #             load_game()
+    #         # ## Key inputs controlling currently moving block's movement
+    #         elif event.type == pg.KEYDOWN and event.key in (pg.K_RIGHT, pg.K_LEFT, pg.K_DOWN, pg.K_r):
+    #             direction = ''
+    #             rotation = 0
+    #             if event.key == pg.K_RIGHT:
+    #                 direction = 'r'
+    #             if event.key == pg.K_LEFT:
+    #                 direction = 'l'
+    #             if event.key == pg.K_DOWN:
+    #                 direction = 'd'
+    #             if event.key == pg.K_r:
+    #                 rotation = 90
+    #             game_display.moving_blocks.update(direction, rotation)
+    #         # ## Key input for pausing the game
+    #         elif event.type == pg.KEYDOWN and event.key == pg.K_p:
+    #             pause_game()
+    #     # ## Every 15 ticks move currently moving block down
+    #     if frame_counter >= 15:
+    #         frame_counter = 0
+    #         game_display.moving_blocks.update('d', 0)
+    #     # ## Draw the sprites and update the display
+    #     game_display.draw_game_sprites()
+    #     game_display.draw_ui_sprites()
+    #     game_display.update_game_display()
 
 
 # Displays the main menu
-def main_menu():
-    return
+# def main_menu():
+#     in_menu = True
+#     while in_menu:
+#         frame_clock.tick(30)
+#         for event in pg.event.get():
+#             # ## Key inputs quitting the game
+#             if event.type == pg.QUIT:
+#                 in_menu = False
+#             elif event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
+#                 in_menu = False
+#             elif event.type == pg.KEYDOWN and event.key == pg.K_s:
+#                 play_game()
+#         game_display.draw_main_menu()
 
 
 # Displays the end game menu
-def end_game_menu():
-    return
+# def end_game_menu():
+#     return
 
 # Initialize pyGame module and game clock
 pg.init()
@@ -841,11 +981,10 @@ default_settings = Default_Settings()
 game_state = Game_State()
 game_display = Game_Display()
 game_sounds = Game_Sounds()
+game_loops = Game_Loops()
 # Create the first block
 new_block()
-# Initialize game loop
-running = True
 # Play the main theme
 game_sounds.play_main_theme()
-# Game loop
-play_game()
+# Initialize the game
+game_loops.main_menu()
