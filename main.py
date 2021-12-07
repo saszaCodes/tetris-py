@@ -666,16 +666,24 @@ class Game_Display:
         self.main_menu = pg.Surface((650, 600))
         self.main_menu = self.main_menu.convert()
         self.main_menu.fill((0, 0, 0))
+        self.main_menu_background = pg.Surface(self.main_menu.get_size())
+        self.main_menu_background = self.main_menu_background.convert()
+        self.main_menu_background.fill((0, 0, 0))
         # ## Create endgame screen and its background
         self.end_game_menu = pg.Surface((650, 600))
-        self.end_game_menu = self.main_menu.convert()
+        self.end_game_menu = self.end_game_menu.convert()
         self.end_game_menu.fill((0, 0, 0))
+        self.end_game_menu_background = pg.Surface(self.end_game_menu.get_size())
+        self.end_game_menu_background = self.end_game_menu_background.convert()
+        self.end_game_menu_background.fill((0, 0, 0))
         # ## Initialize sprite groups
         self.stationary_blocks = pg.sprite.Group()
         self.moving_blocks = pg.sprite.Group()
 
     # Draws the main menu
     def draw_main_menu(self):
+        # ## First, blit the background to draw over
+        self.main_menu.blit(self.main_menu_background, (0, 0))
         text_antialiased = True
         text_color = (255, 255, 255)
         my_font = pg.font.SysFont('Console', 40)
@@ -694,6 +702,7 @@ class Game_Display:
 
     # Draw the endgame screen
     def draw_end_game_menu(self):
+        self.end_game_menu.blit(self.end_game_menu_background, (0, 0))
         text_antialiased = True
         text_color = (255, 255, 255)
         my_font = pg.font.SysFont('Console', 40)
