@@ -776,6 +776,62 @@ def pause_game():
                 paused = False
 
 
+# Starts the game
+def play_game():
+    playing = True
+    # ## frame_counter should be declared outside of the function to make sure that pausing the game won't influence it
+    # CZY TO JEST DOBRZE??? (GLOBAL)
+    global frame_counter
+    while playing:
+        frame_clock.tick(30)
+        frame_counter += 1
+        # ## Listen for key inputs and kick off processes creating the expected output
+        for event in pg.event.get():
+            # ## Key inputs quitting the game
+            if event.type == pg.QUIT:
+                playing = False
+            elif event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
+                playing = False
+            # ## Key inputs saving and loading the game
+            elif event.type == pg.KEYDOWN and event.key == pg.K_s:
+                save_game()
+            elif event.type == pg.KEYDOWN and event.key == pg.K_l:
+                load_game()
+            # ## Key inputs controlling currently moving block's movement
+            elif event.type == pg.KEYDOWN and event.key in (pg.K_RIGHT, pg.K_LEFT, pg.K_DOWN, pg.K_r):
+                direction = ''
+                rotation = 0
+                if event.key == pg.K_RIGHT:
+                    direction = 'r'
+                if event.key == pg.K_LEFT:
+                    direction = 'l'
+                if event.key == pg.K_DOWN:
+                    direction = 'd'
+                if event.key == pg.K_r:
+                    rotation = 90
+                game_display.moving_blocks.update(direction, rotation)
+            # ## Key input for pausing the game
+            elif event.type == pg.KEYDOWN and event.key == pg.K_p:
+                pause_game()
+        # ## Every 15 ticks move currently moving block down
+        if frame_counter >= 15:
+            frame_counter = 0
+            game_display.moving_blocks.update('d', 0)
+        # ## Draw the sprites and update the display
+        game_display.draw_game_sprites()
+        game_display.draw_ui_sprites()
+        game_display.update_display()
+
+
+# Displays the main menu
+def main_menu():
+    return
+
+
+# Displays the end game menu
+def end_game_menu():
+    return
+
 # Initialize pyGame module and game clock
 pg.init()
 frame_clock = pg.time.Clock()
@@ -792,42 +848,4 @@ running = True
 # Play the main theme
 game_sounds.play_main_theme()
 # Game loop
-while running:
-    frame_clock.tick(30)
-    frame_counter += 1
-    # ## Listen for key inputs and kick off processes creating the expected output
-    for event in pg.event.get():
-        # ## Key inputs quitting the game
-        if event.type == pg.QUIT:
-            running = False
-        elif event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
-            running = False
-        # ## Key inputs saving and loading the game
-        elif event.type == pg.KEYDOWN and event.key == pg.K_s:
-            save_game()
-        elif event.type == pg.KEYDOWN and event.key == pg.K_l:
-            load_game()
-        # ## Key inputs controlling currently moving block's movement
-        elif event.type == pg.KEYDOWN and event.key in (pg.K_RIGHT, pg.K_LEFT, pg.K_DOWN, pg.K_r):
-            direction = ''
-            rotation = 0
-            if event.key == pg.K_RIGHT:
-                direction = 'r'
-            if event.key == pg.K_LEFT:
-                direction = 'l'
-            if event.key == pg.K_DOWN:
-                direction = 'd'
-            if event.key == pg.K_r:
-                rotation = 90
-            game_display.moving_blocks.update(direction, rotation)
-        # ## Key input for pausing the game
-        elif event.type == pg.KEYDOWN and event.key == pg.K_p:
-            pause_game()
-    # ## Every 15 ticks move currently moving block down
-    if frame_counter >= 15:
-        frame_counter = 0
-        game_display.moving_blocks.update('d', 0)
-    # ## Draw the sprites and update the display
-    game_display.draw_game_sprites()
-    game_display.draw_ui_sprites()
-    game_display.update_display()
+play_game()
