@@ -91,7 +91,7 @@ class Game_State:
                 row.append(False)
             self.state.append(row)
         # ## When the game_state object is created, fill the array of next blocks with random blocks
-        self.next_blocks = [self._new_block()] * 3
+        self.next_blocks = [self.new_block()] * 3
 
     def clear_all_rows(self):
         self.__init__()
@@ -103,7 +103,7 @@ class Game_State:
             else:
                 game_state.state[i] = [False] * default_settings.no_of_columns
 
-    def _new_block(self, **kwargs):
+    def new_block(self, **kwargs):
         # ## If type, color or position was specified, retrieve it from dict with keyword arguments
         specified_type = kwargs.get('type')
         specified_color = kwargs.get('color')
@@ -147,9 +147,8 @@ class Game_State:
     def get_next_block(self):
         block = self.next_blocks[0]
         self.next_blocks = self.next_blocks[1:]
-        self.next_blocks.append(self._new_block())
+        self.next_blocks.append(self.new_block())
         return block
-
 
 
 # jakich informacji potrzebuję, by odtworzyć stan gry
@@ -172,11 +171,6 @@ def print_game_state_pretty():
         print(row_s)
         if index == default_settings.no_of_rows - 1:
             print(separator)
-
-
-# Pauses the game
-def pause_game():
-    return
 
 
 # Saves current game state with a timestamp to the savegame file
@@ -205,17 +199,31 @@ def load_game():
         block_position = Position(block_info['position']['x'], block_info['position']['y'])
         block_color = block_info['color']
         Cell_Sprite(block_position, block_color)
-    # ## Get type of block, position, rotation and color of the moving sprite and create a new block using this data
+    # ## Get type of block, position, rotation and color of the moving sprite, create a new block using this data
+    # ## and add it to moving_blocks group
     moving_block_info = game_info['moving_blocks_info'][0]
     moving_block_type = moving_block_info['class_name']
     moving_block_position = Position(moving_block_info['position']['x'], moving_block_info['position']['y'])
     moving_block_rotation = moving_block_info['rotation']
     moving_block_color = moving_block_info['color']
-    new_block(type=moving_block_type, position=moving_block_position, rotation=moving_block_rotation, color=moving_block_color)
+    new_block = game_state.new_block(type=moving_block_type, position=moving_block_position,
+                                     rotation=moving_block_rotation, color=moving_block_color)
+    game_display.moving_blocks.add(new_block)
+    # ## Get type of block, position, rotation and color of each block in the next_blocks_info array,
+    # ## create a new block using this data and add it to next_blocks array.
+    next_blocks = []
+    for block_info in game_info['next_blocks_info']:
+        block_type = block_info['class_name']
+        block_position = Position(block_info['position']['x'], moving_block_info['position']['y'])
+        block_rotation = block_info['rotation']
+        block_color = block_info['color']
+        block = game_state.new_block(type=block_type, position=block_position,
+                                     rotation=block_rotation, color=block_color)
+        next_blocks.append(block)
+    # ## Substitute current next_blocks list with a loaded one
+    game_state.next_blocks = next_blocks
     # ## Substitute current score with the loaded score
     game_state.score = game_info['score_info']
-    # ## Substitute current next_blocks list with the loaded list
-    game_state.next_blocks = game_info['next_blocks_info']
     # ## Substitute current game state with the loaded game state. This has to be done after any methods
     # ## updating the screen or game state are called to make sure any checks running when new blocks
     # ## are added don't conflict with the new game state
@@ -230,7 +238,15 @@ class Game_Info:
         # ## Add current points to the object
         self.score_info = game_state.score
         # ## Add current next_blocks list to the object
-        self.next_blocks_info = game_state.next_blocks
+        self.next_blocks_info = []
+        for sprite in game_state.next_blocks:
+            sprite_info = {
+                'class_name': sprite.__class__.__name__,
+                'position': sprite.position,
+                'color': sprite.color,
+                'rotation': sprite.rotation
+            }
+            self.next_blocks_info.append(sprite_info)
         # ## Add necessary info about moving blocks to the object (adding moving_blocks Group causes
         # ## serialization issues; it would also mean serializing and saving redundant data)
         self.moving_blocks_info = []
@@ -327,6 +343,7 @@ class Block(pg.sprite.Sprite):
         check_and_clear()
         print(game_state.next_blocks)
         new_block = game_state.get_next_block()
+        print(new_block)
         game_display.moving_blocks.add(new_block)
 
     # Move or rotate the block if possible, detect collisions and act accordingly
