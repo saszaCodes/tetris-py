@@ -247,7 +247,6 @@ class Block(pg.sprite.Sprite):
     # Initialize key properties used by this class and by child classes
     def __init__(self, position, rotation, color):
         pg.sprite.Sprite.__init__(self)
-        self.add(game_display.moving_blocks)
         self.color = color
         self.position = position
         self.fields = []
@@ -610,6 +609,9 @@ def new_block(**kwargs):
         if game_state.state[field.x][field.y]:
             # JAK ZROBIĆ ŻEBY NIE SIĘGAĆ DO TEGO OBIEKTU? ZWRACANIE RZECZY PRZEZ FUNKCJE?
             game_loops.game_finished = True
+    # ## Add new block to the moving_blocks group
+    # CZY TO NA PEWNO POWINNO BYĆ TUTAJ, A NIE PRZED PĘTLĄ SPRAWDZAJĄCĄ POLA?
+    block.add(game_display.moving_blocks)
 
 
 # Check if any row is filled. If it is, update the score, game state and sprites
