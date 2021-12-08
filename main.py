@@ -695,6 +695,7 @@ class Game_Display:
         # ## Initialize sprite groups
         self.stationary_blocks = pg.sprite.Group()
         self.moving_blocks = pg.sprite.Group()
+        self.next_blocks = pg.sprite.Group()
 
     # Draws the main menu
     def draw_main_menu(self):
@@ -770,12 +771,21 @@ class Game_Display:
         key_1_size = my_font_small.size('R - obróć klocek')
         key_2_size = my_font_small.size('S - zapisz grę')
         key_3_size = my_font_small.size('L - ładuj grę')
-        self.ui_area.blit(score_title, ((250 - score_title_size[0])/2, 120))
-        self.ui_area.blit(score_value, ((250 - score_value_size[0])/2, 160))
-        self.ui_area.blit(keys_title, ((250 - keys_title_size[0]) / 2, 280))
-        self.ui_area.blit(key_1, ((250 - key_1_size[0]) / 2, 330))
-        self.ui_area.blit(key_2, ((250 - key_2_size[0]) / 2, 360))
-        self.ui_area.blit(key_3, ((250 - key_3_size[0]) / 2, 390))
+        # ##
+        next_blocks_surface = pg.Surface((250, 100))
+        i = 0
+        for sprite in game_state.next_blocks:
+            sprite.image = pg.transform.scale(sprite.image, (80, 80))
+            next_blocks_surface.blit(sprite.image, (25 + 80 * i, 10))
+            i += 1
+        # ##
+        self.ui_area.blit(score_title, ((250 - score_title_size[0])/2, 100))
+        self.ui_area.blit(score_value, ((250 - score_value_size[0])/2, 140))
+        self.ui_area.blit(next_blocks_surface, (0, 220))
+        self.ui_area.blit(keys_title, ((250 - keys_title_size[0]) / 2, 370))
+        self.ui_area.blit(key_1, ((250 - key_1_size[0]) / 2, 410))
+        self.ui_area.blit(key_2, ((250 - key_2_size[0]) / 2, 440))
+        self.ui_area.blit(key_3, ((250 - key_3_size[0]) / 2, 470))
 
     # Removes sprites from one row, updates position property of the sprites above and moves them down on the display
     def clear_row(self, x_position):
