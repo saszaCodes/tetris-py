@@ -90,13 +90,8 @@ class Game_State:
             for j in range(0, default_settings.no_of_columns):
                 row.append(False)
             self.state.append(row)
-        # ## When the game_state object is created, fill the array of next blocks with random block types
-        self.next_blocks = []
-        for i in range(0, default_settings.no_of_next_blocks):
-            block_types = default_settings.block_names
-            block_type = block_types[random.randrange(0, block_types.__len__())]
-            self.next_blocks.append(block_type)
-        print(self.next_blocks)
+        # ## When the game_state object is created, fill the array of next blocks with random blocks
+        self.next_blocks = [self._new_block()] * 3
 
     def clear_all_rows(self):
         self.__init__()
@@ -107,6 +102,54 @@ class Game_State:
                 game_state.state[i] = game_state.state[i - 1]
             else:
                 game_state.state[i] = [False] * default_settings.no_of_columns
+
+    def _new_block(self, **kwargs):
+        # ## If type, color or position was specified, retrieve it from dict with keyword arguments
+        specified_type = kwargs.get('type')
+        specified_color = kwargs.get('color')
+        specified_position = kwargs.get('position')
+        specified_rotation = kwargs.get('rotation')
+        # ## If position was specified in kwargs, use it. If not, use default position
+        if specified_position is not None:
+            position = specified_position
+        else:
+            position = default_settings.block_position
+        # ## If rotation was specified in kwargs, use it. If not, use default value
+        if specified_rotation is not None:
+            rotation = specified_rotation
+        else:
+            rotation = default_settings.block_rotation
+        # ## If color was specified in kwargs, use it. If not, choose a random color
+        if specified_color is not None:
+            color = specified_color
+        else:
+            # ## Draw a random color
+            colors = default_settings.block_colors
+            color = colors[random.randrange(0, colors.__len__())]
+        # ## If type was specified in kwargs, use it. If not, choose a random block
+        if specified_type is not None:
+            block_constructor = default_settings.block_name_to_constructor[specified_type]
+        else:
+            types = default_settings.block_names
+            type = types[random.randrange(0, types.__len__())]
+            block_constructor = default_settings.block_name_to_constructor[type]
+        # ## Create a new block
+        block = block_constructor(position, rotation, color)
+        # ## Check if block's initial fields are available. If not, end the game
+        for field in block.fields:
+            if self.state[field.x][field.y]:
+                # JAK ZROBIĆ ŻEBY NIE SIĘGAĆ DO TEGO OBIEKTU? ZWRACANIE RZECZY PRZEZ FUNKCJE?
+                game_loops.game_finished = True
+        # ## Add new block to the moving_blocks group
+        # CZY TO NA PEWNO POWINNO BYĆ TUTAJ, A NIE PRZED PĘTLĄ SPRAWDZAJĄCĄ POLA?
+        return block
+
+    def get_next_block(self):
+        block = self.next_blocks[0]
+        self.next_blocks = self.next_blocks[1:]
+        self.next_blocks.append(self._new_block())
+        return block
+
 
 
 # jakich informacji potrzebuję, by odtworzyć stan gry
@@ -251,7 +294,6 @@ class Block(pg.sprite.Sprite):
         self.position = position
         self.fields = []
         self.rotation = rotation
-        game_window = pg.Surface(game_display.game_area.get_size())
         # CZY TO POWINNO BYĆ ZDEFINIOWANE TUTAJ, CZY KAŻDORAZOWO ODWOŁANIE DO GAME_DISPLAY?
         self.cell_width = game_display.game_cell_width
         self.cell_height = game_display.game_cell_height
@@ -284,7 +326,8 @@ class Block(pg.sprite.Sprite):
         # ewentualnie: dodwanie punktów w osobnym miejscu, np. bezpośrednio w pętli gry lub osobna klasa z metodami obśługującymi punktację
         check_and_clear()
         print(game_state.next_blocks)
-        new_block()
+        new_block = game_state.get_next_block()
+        game_display.moving_blocks.add(new_block)
 
     # Move or rotate the block if possible, detect collisions and act accordingly
     def _move(self, direction, rotation):
@@ -564,54 +607,8 @@ class Spaceship_Block(Block):
         return new_fields
 
 
-# Create a new block, if possible. If not, exit the game
-def new_block(**kwargs):
-    # ## If type, color or position was specified, retrieve it from dict with keyword arguments
-    specified_type = kwargs.get('type')
-    specified_color = kwargs.get('color')
-    specified_position = kwargs.get('position')
-    specified_rotation = kwargs.get('rotation')
-    # ## If position was specified in kwargs, use it. If not, use default position
-    if specified_position is not None:
-        position = specified_position
-    else:
-        position = default_settings.block_position
-    # ## If rotation was specified in kwargs, use it. If not, use default value
-    if specified_rotation is not None:
-        rotation = specified_rotation
-    else:
-        rotation = default_settings.block_rotation
-    # ## If color was specified in kwargs, use it. If not, choose a random color
-    if specified_color is not None:
-        color = specified_color
-    else:
-        # ## Draw a random color
-        colors = default_settings.block_colors
-        color = colors[random.randrange(0, colors.__len__())]
-    # ## If type was specified in kwargs, use it. If not, choose a the next block from the game_state.next_blocks list
-    if specified_type is not None:
-        block_constructor = default_settings.block_name_to_constructor[specified_type]
-        block = block_constructor(position, rotation, color)
-    else:
-        # ## Take the first block from the game_state.next_blocks list, then delete it from the list and add a new
-        # ## block at the end
-        next_blocks = game_state.next_blocks
-        types = default_settings.block_names
-        type = next_blocks[0]
-        type_to_append = types[random.randrange(0, types.__len__())]
-        next_blocks.append(type_to_append)
-        game_state.next_blocks = next_blocks[1:]
-        # ## Get the block constructor function and run it with appropriate arguments
-        block_constructor = default_settings.block_name_to_constructor[type]
-        block = block_constructor(position, rotation, color)
-    # ## Check if block's initial fields are available. If not, end the game
-    for field in block.fields:
-        if game_state.state[field.x][field.y]:
-            # JAK ZROBIĆ ŻEBY NIE SIĘGAĆ DO TEGO OBIEKTU? ZWRACANIE RZECZY PRZEZ FUNKCJE?
-            game_loops.game_finished = True
-    # ## Add new block to the moving_blocks group
-    # CZY TO NA PEWNO POWINNO BYĆ TUTAJ, A NIE PRZED PĘTLĄ SPRAWDZAJĄCĄ POLA?
-    block.add(game_display.moving_blocks)
+# Create a new block, if possible. If not, exit the game. Returns newly created block
+# def new_block(**kwargs):
 
 
 # Check if any row is filled. If it is, update the score, game state and sprites
@@ -825,7 +822,8 @@ class Game_Loops:
                     game_state.score = 0
                     game_display.clear_all_rows()
                     game_display.moving_blocks.empty()
-                    new_block()
+                    new_block = game_state.get_next_block()
+                    game_display.moving_blocks.add(new_block)
                     self._game()
             game_display.draw_main_menu()
 
@@ -894,11 +892,11 @@ class Game_Loops:
 pg.init()
 # Initialize objects used by other functions and methods
 default_settings = Default_Settings()
-game_state = Game_State()
 game_display = Game_Display()
+game_state = Game_State()
 game_sounds = Game_Sounds()
 game_loops = Game_Loops()
 # Create the first block
-new_block()
+game_state.get_next_block()
 # Initialize the game
 game_loops.main_menu()
