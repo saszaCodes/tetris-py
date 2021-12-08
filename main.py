@@ -91,7 +91,10 @@ class Game_State:
                 row.append(False)
             self.state.append(row)
         # ## When the game_state object is created, fill the array of next blocks with random blocks
-        self.next_blocks = [self.new_block()] * 3
+        self.next_blocks = []
+        for i in range(0, default_settings.no_of_next_blocks):
+            block = self.new_block()
+            self.next_blocks.append(block)
 
     def clear_all_rows(self):
         self.__init__()
@@ -341,9 +344,7 @@ class Block(pg.sprite.Sprite):
             Cell_Sprite(cell_position, self.color)
         # ewentualnie: dodwanie punktów w osobnym miejscu, np. bezpośrednio w pętli gry lub osobna klasa z metodami obśługującymi punktację
         check_and_clear()
-        print(game_state.next_blocks)
         new_block = game_state.get_next_block()
-        print(new_block)
         game_display.moving_blocks.add(new_block)
 
     # Move or rotate the block if possible, detect collisions and act accordingly
@@ -775,8 +776,10 @@ class Game_Display:
         next_blocks_surface = pg.Surface((250, 100))
         i = 0
         for sprite in game_state.next_blocks:
-            sprite.image = pg.transform.scale(sprite.image, (80, 80))
-            next_blocks_surface.blit(sprite.image, (25 + 80 * i, 10))
+            # ## Copy sprite's image to ensure that originals in game_state.next_blocks array are not tampered with
+            image = pg.Surface.copy(sprite.image)
+            image = pg.transform.scale(image, (80, 80))
+            next_blocks_surface.blit(image, (20 + 80 * i, 10))
             i += 1
         # ##
         self.ui_area.blit(score_title, ((250 - score_title_size[0])/2, 100))
@@ -923,7 +926,5 @@ game_display = Game_Display()
 game_state = Game_State()
 game_sounds = Game_Sounds()
 game_loops = Game_Loops()
-# Create the first block
-game_state.get_next_block()
 # Initialize the game
 game_loops.main_menu()
