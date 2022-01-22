@@ -1,4 +1,4 @@
-import constants
+from constants import constants
 # TUTAJ DODAĆ (tzn. w całym pliku) komentarze, żeby było wiadomo co się dzieje
 
 # TUTAJ DODAĆ jeszcze sprawdzenie, że player_id i opponent_id nie są takie same
