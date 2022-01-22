@@ -100,22 +100,21 @@ class parser:
 
     @staticmethod
     def bytes_to_packet(provided_bytes):
-        if not isinstance(provided_bytes, bytes):
-            raise TypeError('provided_bytes has to by a bytes object')
+        if not isinstance(provided_bytes, bytearray):
+            raise TypeError('provided_bytes has to be a bytearray object')
         elif provided_bytes.__len__() != constants.packet_length:
             raise ValueError(f'provided_bytes length is incorrect; it should be {constants.packet_length}')
         else:
-            byte_array = bytearray(provided_bytes)
             # TUTAJ POPRAWIĆ sprawdzanie (w constants powinien być two-way dictionary albo coś)
-            code_bytes = byte_array[:constants.header_length]
-            del byte_array[:constants.header_length]
-            del byte_array[:constants.buffer_length]
-            player_id_bytes = byte_array[:constants.player_id_length]
-            del byte_array[:constants.player_id_length]
-            opponent_id_bytes = byte_array[:constants.opponent_id_length]
-            del byte_array[:constants.opponent_id_length]
-            data_bytes = byte_array[:]
-            del byte_array[:]
+            code_bytes = provided_bytes[:constants.header_length]
+            del provided_bytes[:constants.header_length]
+            del provided_bytes[:constants.buffer_length]
+            player_id_bytes = provided_bytes[:constants.player_id_length]
+            del provided_bytes[:constants.player_id_length]
+            opponent_id_bytes = provided_bytes[:constants.opponent_id_length]
+            del provided_bytes[:constants.opponent_id_length]
+            data_bytes = provided_bytes[:]
+            del provided_bytes[:]
             # Parse packet code
             code_int = int.from_bytes(code_bytes, constants.byteorder)
             # CZY TU POWINNAM WYWALAĆ ERROR JEŚLI NIE MA TEGO W ZDEFINIOWANYCH TYPACH? PEWNIE TAK
