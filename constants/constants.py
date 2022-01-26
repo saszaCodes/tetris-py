@@ -25,3 +25,8 @@ player_id_length = 2
 opponent_id_length = 2
 data_length = 108
 packet_length = header_length + buffer_length + player_id_length + opponent_id_length + data_length
+
+# GAME AND PARSER CONTSTANTS
+# no_of_rows and no_of_columns need to be multiples o 2
+no_of_rows = 12
+no_of_columns = 18
