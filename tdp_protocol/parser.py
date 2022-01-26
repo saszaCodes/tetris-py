@@ -197,13 +197,15 @@ class tdp_parser:
             # samo w zaleźności od tego ile bitów zajmują dane o 1 polu (powinno być zdefiniowane w constants)
             data_bytes = bytes()
             for row in packet.data:
-                for column_index in range(constants.no_of_columns, 2):
+                for column_index in range(0, constants.no_of_columns, 2):
                     field_1 = row[column_index]
                     field_2 = row[column_index + 1]
                     encoded_fields_int = field_1 + field_2 * 16
                     encoded_fields_byte = encoded_fields_int.to_bytes(1, byteorder=constants.byteorder)
                     data_bytes += encoded_fields_byte
+            print(f'data_bytes length: {data_bytes.__len__()}')
             packet = code_bytes + buffer_bytes + player_id_bytes + opponent_id_bytes + data_bytes
+            print(f'packet length: {packet.__len__()}')
             return packet
         # ## If packet's type is 'end_game', look up its type's code and parse it to bytes.
         # ## Parse player_id and opponent_id to bytes. Fill other fields with 0s
