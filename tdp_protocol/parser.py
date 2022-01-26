@@ -78,7 +78,7 @@ class tdp_packet:
 # Class parsing bytes into tdp_packet objects and vice versa
 class tdp_parser:
     # MOŻE DAŁOBY SIĘ ZROBIĆ PODZIAŁ NA PARSER SERWEROWY I KLIENCKI, ŻEBY SERWEROWY NIE MUSIAŁ
-    # ODTWARZAĆ CAŁEJ WIADOMOŚCI?
+    # ODTWARZAĆ CAŁEJ WIADOMOŚCI? (NIE INTERESUJE GO GAME DATA)
 
     # TA METODA JEST CHYBA W OGÓLE NIEPOTRZEBNA
     @staticmethod
@@ -133,10 +133,21 @@ class tdp_parser:
             player_id_int = int.from_bytes(player_id_bytes, constants.byteorder)
             opponent_id_int = int.from_bytes(opponent_id_bytes, constants.byteorder)
             # ## Parse data
-            # TUTAJ DODAĆ parsowanie danych w odpowiedni sposób, teraz placeholder
-            data_int = int.from_bytes(data_bytes, constants.byteorder)
+            # TUTAJ POPRAWIĆ parsowanie w ten sposób, żeby nie było hardcoded 16 tylko żeby się obliczało
+            # samo w zaleźności od tego ile bitów zajmują dane o 1 polu (powinno być zdefiniowane w constants)
+            # TUTAJ DODAĆ wyjaśnienie co się dzieje
+            data_list = []
+            for row_index in range(0, constants.no_of_rows):
+                row_ints = []
+                for column_index in range(int(constants.no_of_columns / 2)):
+                    index_one_dimension = row_index * int(constants.no_of_columns / 2) + column_index
+                    encoded_fields_int = data_bytes[index_one_dimension]
+                    field_1 = encoded_fields_int % 16
+                    field_2 = encoded_fields_int // 16
+                    row_ints.extend((field_1, field_2))
+                data_list.append(row_ints)
             # ## Create a new tdp_packet using parsed data
-            return tdp_packet(type_str, player_id_int, opponent_id_int, data_int)
+            return tdp_packet(type_str, player_id_int, opponent_id_int, data_list)
 
     # CZY PAKIET W OGÓLE POWINIEN ZAWIERAĆ OPPONENT ID?
     # CHYBA NIE, LEPIEJ ŻEBY SERWER DECYDOWAŁ Z KIM GRACZ GRA NA PODSTAWIE JEGO ID I TYLE
@@ -173,9 +184,27 @@ class tdp_parser:
             data_bytes = int.to_bytes(0, constants.data_length, constants.byteorder)
             packet = code_bytes + buffer_bytes + player_id_bytes + opponent_id_bytes + data_bytes
             return packet
-        # TUTAJ DODAĆ parsowanie game data
+        # TUTAJ DODAĆ wyjaśnienie co się dzieje
         elif packet.type == constants.packet_types.game_data.name:
-            return
+            code_int = constants.packet_types.now_playing.code
+            code_bytes = int.to_bytes(code_int, constants.header_length, constants.byteorder)
+            buffer_bytes = int.to_bytes(0, constants.buffer_length, constants.byteorder)
+            player_id_int = packet.player_id
+            opponent_id_int = packet.opponent_id
+            player_id_bytes = int.to_bytes(player_id_int, constants.player_id_length, constants.byteorder)
+            opponent_id_bytes = int.to_bytes(opponent_id_int, constants.opponent_id_length, constants.byteorder)
+            # TUTAJ POPRAWIĆ parsowanie w ten sposób, żeby nie było hardcoded 1, 2 i 16 tylko żeby się obliczało
+            # samo w zaleźności od tego ile bitów zajmują dane o 1 polu (powinno być zdefiniowane w constants)
+            data_bytes = bytes()
+            for row in packet.data:
+                for column_index in range(constants.no_of_columns, 2):
+                    field_1 = row[column_index]
+                    field_2 = row[column_index + 1]
+                    encoded_fields_int = field_1 + field_2 * 16
+                    encoded_fields_byte = encoded_fields_int.to_bytes(1, byteorder=constants.byteorder)
+                    data_bytes += encoded_fields_byte
+            packet = code_bytes + buffer_bytes + player_id_bytes + opponent_id_bytes + data_bytes
+            return packet
         # ## If packet's type is 'end_game', look up its type's code and parse it to bytes.
         # ## Parse player_id and opponent_id to bytes. Fill other fields with 0s
         elif packet.type == constants.packet_types.end_game.name:
