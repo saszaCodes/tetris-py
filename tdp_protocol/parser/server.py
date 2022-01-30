@@ -3,10 +3,11 @@ from tdp_protocol.parser import common
 
 
 class tdp_metadata:
-    def __init__(self, type, player_id, opponent_id):
+    def __init__(self, type, player_id, opponent_id, undecoded_data):
         self.type = type
         self.player_id = player_id
         self.opponent_id = opponent_id
+        self.undecoded_data = undecoded_data
 
 
 def bytes_to_metadata(provided_bytes):
@@ -29,10 +30,10 @@ def bytes_to_metadata(provided_bytes):
     # ## Parse player_id and opponent_id
     player_id_int = common.bytes_to_player_id(player_id_bytes)
     opponent_id_int = common.bytes_to_opponent_id(opponent_id_bytes)
-    return tdp_metadata(type_str, player_id_int, opponent_id_int), data_bytes
+    return tdp_metadata(type_str, player_id_int, opponent_id_int, data_bytes)
 
 
-def metadata_to_bytes(metadata, data_bytes):
+def metadata_to_bytes(metadata):
     if not isinstance(metadata, tdp_metadata):
         error_message = 'Incorrect data type of packet. Use provided tdp_metadata type.'
         raise TypeError(error_message)
@@ -40,4 +41,4 @@ def metadata_to_bytes(metadata, data_bytes):
     buffer_bytes = int.to_bytes(0, constants.buffer_length, constants.byteorder)
     player_id_bytes = common.player_id_to_bytes(metadata.player_id)
     opponent_id_bytes = common.opponent_id_to_bytes(metadata.opponent_id)
-    return code_bytes + player_id_bytes + buffer_bytes + opponent_id_bytes + data_bytes
+    return code_bytes + player_id_bytes + buffer_bytes + opponent_id_bytes + metadata.undecoded_data
