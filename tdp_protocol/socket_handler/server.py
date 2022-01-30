@@ -11,11 +11,11 @@ from tdp_protocol.parser.server import bytes_to_metadata, metadata_to_bytes
 # On one of them, it listens for incoming bytes, parses them to udp packets and passes them to handle_incoming method.
 # On the other one, it waits until handle_outgoing (which is expected to be blocking) returns data and address,
 # parses the data (expected type: tdp_packet) into bytes and sends them to a returned address (expected type: tuple)
-class tdp_client:
+class tdp_server:
     def __init__(self, host, port):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.bind((host, port))
-        print(f'Starting client on port {port}')
+        print(f'Starting server on port {port}')
         self.listening_thread = threading.Thread(group=None, target=self._listen)
         self.sending_thread = threading.Thread(group=None, target=self._send)
 
