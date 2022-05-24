@@ -50,10 +50,10 @@ def bytes_to_packet(provided_bytes):
         del provided_bytes[:]
         # ## Parse packet code
         code_int = common.bytes_to_code(code_bytes)
-        # ZMIENIĆ W CONSTANTS NA SŁOWNIK
-        for const in constants.packet_types.__dict__:
-            if constants.packet_types.__dict__[const].code == code_int:
-                type_str = constants.packet_types.__dict__[const].name
+        packet_types = constants.packet_types
+        for key in packet_types:
+            if packet_types[key].code == code_int:
+                type_str = packet_types[key].name
         # ## Parse player_id and opponent_id
         player_id_int = common.bytes_to_player_id(player_id_bytes)
         opponent_id_int = common.bytes_to_opponent_id(opponent_id_bytes)
@@ -70,15 +70,16 @@ def packet_to_bytes(packet):
     if not isinstance(packet, common.tdp_packet):
         error_message = 'Incorrect data type of packet. Use provided tdp_packet type.'
         raise TypeError(error_message)
-    code_bytes = common.code_to_bytes(packet.code)
-    if packet.type == constants.packet_types.play.name:
-        other_bytes = int.to_bytes(0, constants.packet_length - constants.header_length)
+    packet_code = constants.packet_types[packet.type].code
+    code_bytes = common.code_to_bytes(packet_code)
+    if packet.type == constants.packet_types['play'].name:
+        other_bytes = int.to_bytes(0, constants.packet_length - constants.header_length, constants.byteorder)
         return code_bytes + other_bytes
     buffer_bytes = int.to_bytes(0, constants.buffer_length, constants.byteorder)
     player_id_bytes = common.player_id_to_bytes(packet.player_id)
     opponent_id_bytes = common.opponent_id_to_bytes(packet.opponent_id)
-    if packet.type in (constants.packet_types.now_playing.name, constants.packet_types.end_game.name):
-        other_bytes = int.to_bytes(0, constants.data_length)
+    if packet.type in (constants.packet_types['now_playing'].name, constants.packet_types.end_game.name):
+        other_bytes = int.to_bytes(0, constants.data_length, constants.byteorder)
         return code_bytes + player_id_bytes + buffer_bytes + opponent_id_bytes + other_bytes
     data_bytes = _data_to_bytes(packet.data)
     return code_bytes + player_id_bytes + buffer_bytes + opponent_id_bytes + data_bytes

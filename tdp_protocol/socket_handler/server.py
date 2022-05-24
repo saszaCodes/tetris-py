@@ -2,6 +2,7 @@ import socket
 import threading
 from constants import constants
 from tdp_protocol.parser.server import bytes_to_metadata, metadata_to_bytes
+from main import Block
 
 
 # CZY NIE POWINNO BYĆ JEDNAK TAK, ŻE SERWER PRZYPISUJE PO WĄTKU KAŻDEMU ADRESOWI ("POŁĄCZENIU")?
@@ -19,8 +20,6 @@ class tdp_server:
         self.listening_thread = threading.Thread(group=None, target=self._listen)
         self.sending_thread = threading.Thread(group=None, target=self._send)
 
-    # CZY TAKIE DWIE METODY SĄ LEGIT? BO W SUMIE SERWER I KLIENT POWINNY NA POZIOMIE
-    # SŁUCHANIA / WYSYŁANIA DZIAŁAĆ PRAKTYCZNIE TAK SAMO, JEDYNIE RÓŻNI JE TO, ŻE KLIENT NIE POTRZEBUJE BIND
     def start(self):
         self.listening_thread.start()
         self.sending_thread.start()

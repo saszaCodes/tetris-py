@@ -16,6 +16,12 @@ packet_types = types.SimpleNamespace(
     game_data=packet_type('game_data', 2),
     end_game=packet_type('end_game', 3),
 )
+packet_types = {
+    'play': packet_type('play', 0),
+    'now_playing': packet_type('now_playing', 1),
+    'game_data': packet_type('game_data', 2),
+    'end_game': packet_type('end_game', 3),
+}
 byteorder = 'big'
 # Packet section sizes in bytes
 header_length = 1

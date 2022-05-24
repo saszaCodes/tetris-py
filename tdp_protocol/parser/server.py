@@ -23,10 +23,10 @@ def bytes_to_metadata(provided_bytes):
     del provided_bytes[:]
     # ## Parse packet code
     code_int = common.bytes_to_code(code_bytes)
-    # ZMIENIĆ W CONSTANTS NA SŁOWNIK
-    for const in constants.packet_types.__dict__:
-        if constants.packet_types.__dict__[const].code == code_int:
-            type_str = constants.packet_types.__dict__[const].name
+    packet_types = constants.packet_types
+    for key in packet_types:
+        if packet_types[key].code == code_int:
+            type_str = packet_types[key].name
     # ## Parse player_id and opponent_id
     player_id_int = common.bytes_to_player_id(player_id_bytes)
     opponent_id_int = common.bytes_to_opponent_id(opponent_id_bytes)
@@ -37,7 +37,8 @@ def metadata_to_bytes(metadata):
     if not isinstance(metadata, tdp_metadata):
         error_message = 'Incorrect data type of packet. Use provided tdp_metadata type.'
         raise TypeError(error_message)
-    code_bytes = common.code_to_bytes(metadata.code)
+    metadata_code = constants.packet_types[metadata.type].code
+    code_bytes = common.code_to_bytes(metadata_code)
     buffer_bytes = int.to_bytes(0, constants.buffer_length, constants.byteorder)
     player_id_bytes = common.player_id_to_bytes(metadata.player_id)
     opponent_id_bytes = common.opponent_id_to_bytes(metadata.opponent_id)

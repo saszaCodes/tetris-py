@@ -1,19 +1,8 @@
 import random
 from constants import constants
-from tdp_protocol.socket_handler import tdp_socket_handler
+from tdp_protocol.socket_handler.client import tdp_client
 from tdp_protocol.parser.common import tdp_packet
 
-
-# print(constants.packet_types)
-#
-#
-# messages = ['how', 'are', 'u']
-#
-# sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-#
-# for message in messages:
-#     bytes = message.encode(constants.string_encoding)
-#     sock.sendto(bytes, ('127.0.0.1', 20000))
 
 def print_game_state_pretty(state):
     for (index, row) in enumerate(state):
@@ -25,7 +14,7 @@ def print_game_state_pretty(state):
         if index == state.__len__() - 1:
             print(separator)
 
-class tetris_client(tdp_socket_handler):
+class tetris_client(tdp_client):
     def __init__(self, host, port):
         super().__init__(host, port)
 
@@ -53,4 +42,4 @@ class tetris_client(tdp_socket_handler):
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 client = tetris_client('127.0.0.1', 30000)
-client.start_client()
+client.start()

@@ -20,6 +20,8 @@ import os
 import random
 import json
 import datetime
+import threading
+from client import tetris_client
 
 # if not pg.font:
 #     print('Warning: fonts disabled')
@@ -34,8 +36,6 @@ sounds_dir = os.path.join(assets_dir, 'sounds')
 
 # Initialize random module
 random.seed()
-# CZEMU TO NIE DZIALA???
-# game_state = [[False]*no_of_rows]*no_of_columns
 
 
 # Class for keeping the default settings for game objects
@@ -233,6 +233,7 @@ def load_game():
     game_state.state = game_info['game_state_info']
 
 
+# POPRAWIĆ NAZWĘ ŻEBY BYŁO WIADOMO DO CZEGO SŁUŻY
 # Helper class used to extract key information about the game state for saving or sending over the internet
 class Game_Info:
     def __init__(self):
@@ -928,3 +929,4 @@ game_sounds = Game_Sounds()
 game_loops = Game_Loops()
 # Initialize the game
 game_loops.main_menu()
+
