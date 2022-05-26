@@ -14,5 +14,7 @@ class Settings:
         self.no_of_rows = 18
         self.no_of_columns = 12
         self.new_block_position = Position(6,0)
+        # DO POPRAWIENIA
+        self.colors = ['red', 'green', 'blue', 'yellow']
 
 settings = Settings()
