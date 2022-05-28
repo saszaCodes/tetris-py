@@ -15,7 +15,7 @@ class Board:
                 return True
         return False
 
-    def write_to_board(self, cells, color):
+    def write_to_board(self, cells):
         # CZY DOBRZE BY BYLO DODAC HANDLOWANIE PRZEKAZANIA NIE ARRAY?
         for cell in cells:
-            self.board[cell.position.x][cell.position.y] = color
+            self.board[cell.position.x][cell.position.y] = cell.color

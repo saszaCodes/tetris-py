@@ -48,7 +48,7 @@ class Square_Block(Block):
     def __init__(self, color):
         super.__init__()
         x, y = itemgetter('x', 'y')(self.base_position)
-        self.fields = [
+        self.cells = [
             Cell(x - 1, y - 1, color),
             Cell(x, y - 1, color),
             Cell(x - 1, y, color),
@@ -64,7 +64,7 @@ class L_Block(Block):
     def __init__(self, color):
         super.__init__()
         x, y = itemgetter('x', 'y')(self.base_position)
-        self.fields = [
+        self.cells = [
             Cell(x + 1, y - 1, color),
             Cell(x - 1, y, color),
             Cell(x, y, color),
@@ -75,7 +75,7 @@ class L_Mirror_Block(Block):
     def __init__(self, color):
         super.__init__()
         x, y = itemgetter('x', 'y')(self.base_position)
-        self.fields = [
+        self.cells = [
             Cell(x - 1, y, color),
             Cell(x, y, color),
             Cell(x + 1, y, color),
@@ -86,7 +86,7 @@ class Line_Block(Block):
     def __init__(self, color):
         super.__init__()
         x, y = itemgetter('x', 'y')(self.base_position)
-        self.fields = [
+        self.cells = [
             Cell(x - 1, y, color),
             Cell(x, y, color),
             Cell(x + 1, y, color)
@@ -96,7 +96,7 @@ class Diagonal_Block(Block):
     def __init__(self, color):
         super.__init__()
         x, y = itemgetter('x', 'y')(self.base_position)
-        self.fields = [
+        self.cells = [
             Cell(x - 1, y - 1, color),
             Cell(x, y - 1, color),
             Cell(x, y, color),
@@ -107,7 +107,7 @@ class Diagonal_Mirror_Block(Block):
     def __init__(self, color):
         super.__init__()
         x, y = itemgetter('x', 'y')(self.base_position)
-        self.fields = [
+        self.cells = [
             Cell(x - 1, y + 1, color),
             Cell(x, y + 1, color),
             Cell(x, y, color),
@@ -118,7 +118,7 @@ class Spaceship_Block(Block):
     def __init__(self, color):
         super.__init__()
         x, y = itemgetter('x', 'y')(self.base_position)
-        self.fields = [
+        self.cells = [
             Cell(x, y - 1, color),
             Cell(x - 1, y, color),
             Cell(x, y, color),
