@@ -3,13 +3,13 @@ from operator import itemgetter
 from settings import settings
 from utils import Cell, Position
 from key_bindings import User_Input
+from math import sin, cos
 
 
 # Abstract class laying groundwork for each type of block in the game
 class Block:
     # Initialize key properties used by this class and by child classes
     def __init__(self):
-        self.rotation = 0
         self.base_position = Position(settings.new_block_position.x, settings.new_block_position.y)
 
     # Set block's new position
@@ -36,14 +36,13 @@ class Block:
 
     #
     def _rotate(self, rotation):
-        self.rotation += rotation
         for cell in self.cells:
             x = cell.position.x
             y = cell.position.y
-            x_ = x*math.cos(self.rotation) - y*math.sin(self.rotation)
-            y_ = y*math.cos(self.rotation) + x*math.sin(self.rotation)
+            x_ = x*cos(rotation) - y*sin(rotation)
+            y_ = y*cos(rotation) + x*sin(rotation)
             # IN PLACE?
-            cell.position = Position(x_, y_)
+            cell.position = Position(round(x_), round(y_))
 
 class Square_Block(Block):
     # I CO Z TEGO, ŻE MISSED?
