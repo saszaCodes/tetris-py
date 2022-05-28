@@ -1,4 +1,3 @@
-import math
 from operator import itemgetter
 from settings import settings
 from utils import Cell, Position
