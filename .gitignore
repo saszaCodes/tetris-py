@@ -1,5 +1,7 @@
-/__pychache__
-/.idea
-/data
+__pycache__/
+.idea/
+data/
 
-/TODO.md
+PYTANIA.md
+TODO.md
+test.py
