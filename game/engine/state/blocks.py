@@ -8,8 +8,9 @@ from math import sin, cos
 # Abstract class laying groundwork for each type of block in the game
 class Block:
     # Initialize key properties used by this class and by child classes
-    def __init__(self):
+    def __init__(self, color):
         self.base_position = Position(settings.new_block_position.x, settings.new_block_position.y)
+        self.color = color
 
     # Set block's new position
     def set_cells(self, cells):
@@ -45,14 +46,14 @@ class Block:
 
 class Square_Block(Block):
     # I CO Z TEGO, ŻE MISSED?
-    def __init__(self, color):
+    def __init__(self):
         super.__init__()
         x, y = itemgetter('x', 'y')(self.base_position)
         self.cells = [
-            Cell(x - 1, y - 1, color),
-            Cell(x, y - 1, color),
-            Cell(x - 1, y, color),
-            Cell(x, y, color)
+            Cell(x - 1, y - 1, self.color),
+            Cell(x, y - 1, self.color),
+            Cell(x - 1, y, self.color),
+            Cell(x, y, self.color)
         ]
 
     # Overwrite default _rotate method to prevent rotation    
@@ -61,66 +62,66 @@ class Square_Block(Block):
 
 
 class L_Block(Block):
-    def __init__(self, color):
+    def __init__(self):
         super.__init__()
         x, y = itemgetter('x', 'y')(self.base_position)
         self.cells = [
-            Cell(x + 1, y - 1, color),
-            Cell(x - 1, y, color),
-            Cell(x, y, color),
-            Cell(x + 1, y, color)
+            Cell(x + 1, y - 1, self.color),
+            Cell(x - 1, y, self.color),
+            Cell(x, y, self.color),
+            Cell(x + 1, y, self.color)
         ]
 
 class L_Mirror_Block(Block):
-    def __init__(self, color):
+    def __init__(self):
         super.__init__()
         x, y = itemgetter('x', 'y')(self.base_position)
         self.cells = [
-            Cell(x - 1, y, color),
-            Cell(x, y, color),
-            Cell(x + 1, y, color),
-            Cell(x + 1, y + 1, color)
+            Cell(x - 1, y, self.color),
+            Cell(x, y, self.color),
+            Cell(x + 1, y, self.color),
+            Cell(x + 1, y + 1, self.color)
         ]
 
 class Line_Block(Block):
-    def __init__(self, color):
+    def __init__(self):
         super.__init__()
         x, y = itemgetter('x', 'y')(self.base_position)
         self.cells = [
-            Cell(x - 1, y, color),
-            Cell(x, y, color),
-            Cell(x + 1, y, color)
+            Cell(x - 1, y, self.color),
+            Cell(x, y, self.color),
+            Cell(x + 1, y, self.color)
         ]
 
 class Diagonal_Block(Block):
-    def __init__(self, color):
+    def __init__(self):
         super.__init__()
         x, y = itemgetter('x', 'y')(self.base_position)
         self.cells = [
-            Cell(x - 1, y - 1, color),
-            Cell(x, y - 1, color),
-            Cell(x, y, color),
-            Cell(x + 1, y, color)
+            Cell(x - 1, y - 1, self.color),
+            Cell(x, y - 1, self.color),
+            Cell(x, y, self.color),
+            Cell(x + 1, y, self.color)
         ]
 
 class Diagonal_Mirror_Block(Block):
-    def __init__(self, color):
+    def __init__(self):
         super.__init__()
         x, y = itemgetter('x', 'y')(self.base_position)
         self.cells = [
-            Cell(x - 1, y + 1, color),
-            Cell(x, y + 1, color),
-            Cell(x, y, color),
-            Cell(x + 1, y, color)
+            Cell(x - 1, y + 1, self.color),
+            Cell(x, y + 1, self.color),
+            Cell(x, y, self.color),
+            Cell(x + 1, y, self.color)
         ]
 
 class Spaceship_Block(Block):
-    def __init__(self, color):
+    def __init__(self):
         super.__init__()
         x, y = itemgetter('x', 'y')(self.base_position)
         self.cells = [
-            Cell(x, y - 1, color),
-            Cell(x - 1, y, color),
-            Cell(x, y, color),
-            Cell(x + 1, y, color)
+            Cell(x, y - 1, self.color),
+            Cell(x - 1, y, self.color),
+            Cell(x, y, self.color),
+            Cell(x + 1, y, self.color)
         ]
