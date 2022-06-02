@@ -1,4 +1,4 @@
-from engine import Position
+from utils import Dimensions, Position
 
 class Settings:
     def __init__(self):

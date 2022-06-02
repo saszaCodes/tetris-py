@@ -19,3 +19,5 @@ class Board:
         # CZY DOBRZE BY BYLO DODAC HANDLOWANIE PRZEKAZANIA NIE ARRAY?
         for cell in cells:
             self.board[cell.position.x][cell.position.y] = cell.color
+
+
