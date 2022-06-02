@@ -9,9 +9,9 @@ class Board:
                 row.append(False)
             self.board.append(row)  
 
-    def check_if_occupied(self, positions):
+    def check_if_legal(self, positions):
         for position in positions:
-            if self.board[position.x][position.y] != False:
+            if (self.board[position.x][position.y] != False and position.x in range (self.no_of_rows) and position.y in range(self.no_of_columns) ):
                 return True
         return False
 
