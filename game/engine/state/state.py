@@ -1,8 +1,8 @@
 from copy import deepcopy
-from board import Board
-from blocks import create_random_block
-from game.engine.key_bindings import User_Input
+from state.board import Board
+from state.blocks import create_random_block
 from key_bindings import User_Input
+from utils import Screen
 
 
 class Frame:
@@ -25,7 +25,7 @@ class State:
             self.board.write_to_board(self.active_block.cells)
             self.active_block = create_random_block()
         # MOZE POWINNXM PRZEKAZYWAC NOWE TABLICE ZAMIAST REFERENCJE?
-        screen = deepcopy(self.board)
-        screen.write_to_board(self.active_block.cells)
+        # CO CHCE PRZEKAZYWAC?
+        screen = Screen(deepcopy(self.board.board), deepcopy(self.active_block))
         return Frame(screen, '')
             
